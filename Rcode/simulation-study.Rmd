@@ -1,0 +1,99 @@
+---
+title: "Simulation Study"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(covidHubUtils)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(doParallel)
+library(tidyverse)
+theme_set(theme_bw())
+library(pander)
+library(DT)
+library(ggalt)  #for geom_dumbbell()
+library(pander)
+# get_all_models()
+# datatable(fdat)
+
+base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/main-data/"
+```
+
+## Association between a component forecaster's bias and importance
+
+```{r plot_imp_bias}
+simdat <- readRDS(paste0(base_path,"simulation_f3bias.rds"))
+
+simdat %>% 
+        dplyr::select(model, f3_bias, importance, dispersion) %>%
+        dplyr::group_by(f3_bias, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
+        ggplot(aes(x=f3_bias, y =avg_imp, color=model)) +
+        geom_line() +
+        geom_point() +
+        labs(x="b (bias of forecaster 3)", y="Importance")
+```
+
+
+
+
+
+## Association between component forecaster dispersion and importance
+
+```{r plot_imp_dispersion}
+simdat <- readRDS(paste0(base_path,"simulation_f3sharp.rds"))
+
+simdat %>% 
+        dplyr::select(model, f3_sharpness, importance, dispersion) %>%
+        dplyr::group_by(f3_sharpness, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
+        ggplot(aes(x=f3_sharpness, y =avg_imp, color=model)) +
+        geom_line() +
+        geom_point() +
+        labs(x="s (standard deviation of forecaster 3)",
+             #title="Importance of three forecasters by different dispersion of forecaster 3", 
+             y="Importance") +
+        scale_x_continuous(breaks = seq(0, 3, by = 0.1)) +
+        theme(panel.grid.major.x = element_line(color = "grey",
+                                                linewidth = 0.1,
+                                                linetype = 2)) +
+        theme(axis.text.x = element_text(size=8, angle=90))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

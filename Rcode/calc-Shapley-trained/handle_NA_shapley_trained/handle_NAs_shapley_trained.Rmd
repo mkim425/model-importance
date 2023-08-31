@@ -1,0 +1,146 @@
+---
+title: "handleNAs"
+author: "Minsu Kim"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(pander)
+library(tibble)
+library(tidyverse)
+library(dplyr)
+library(magrittr)
+library(lubridate)
+```
+
+```{r}
+basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance/unity-shapley-trained-ver2"
+where_na_all_models <- readRDS(paste0(basepath,"/handle_NA_shapley_trained/shapley_trained_all_missing.rds")) 
+```
+
+
+
+# Create files to run
+
+```{r, include=FALSE}
+na_locs <- where_na_all_models$location %>% unique()
+# na_hor <- where_na_all_models$horizon %>% unique() %>% sort()
+
+base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance"
+# Read data
+forecast_data <- readRDS(paste0(base_path,"/data/leave-all-subsets-of-models-out/forecast_data_aligned_death_10models_june20-nov22.rds")) %>% 
+        select(c(1, 3:5, 7:12)) %>% 
+        rename(forecast_date = reference_date) %>% 
+        arrange(forecast_date, model)
+
+truth <- readRDS("~/Documents/Dissertation/Ch1-model_importance/model-importance/unity-lomo-trained/truth-data/truth_data_upto2022.rds")
+
+na_hor <- 4
+for(loc in na_locs){
+        for(hor in na_hor){
+                na_dates <- where_na_all_models %>% 
+                        filter(location == loc, horizon == hor) %>%
+                        select(forecast_date) %>%
+                        pull()
+                
+                for(date in na_dates){
+                        dat <- forecast_data %>%
+                                filter(location == loc, horizon == hor) %>%
+                                dplyr::filter(forecast_date >= as.Date(date) - weeks(12),
+                                              forecast_date <= as.Date(date))
+                        saveRDS(dat, paste0("data-hor4/forecast_data-h", hor, "-loc", loc, "-", date,".rds")) 
+                }
+        }
+}
+```
+
+
+
+did up to above-- 05-05-2023
+
+
+# Read the resulting output
+
+```{r}
+filenames_h1 <- list.files("output", pattern="*-h1-*", full.names=TRUE)
+# length(filenames_h1) # 758
+filenames_h2 <- list.files("output", pattern="*-h2-*", full.names=TRUE)
+# length(filenames_h2) # 756
+filenames_h3 <- list.files("output", pattern="*-h3-*", full.names=TRUE)
+# length(filenames_h3) # 756
+filenames_h4 <- list.files("output", pattern="*-h4-*", full.names=TRUE)
+# length(filenames_h4) # 757
+# length(filenames_h1)+length(filenames_h2)+length(filenames_h3)+length(filenames_h4)
+
+
+# ------------------------------------------------------------------------------
+# Run the following code for each filenames_h1 through filenames_h4 by changing the horizon value
+ldf <- lapply(filenames_h4, readRDS) # <- filenames_h2, filenames_h3, filenames_h4 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+df <- NULL
+for(j in 1:10){
+        df_j <- NULL
+        for(i in 1:length(ldf)){
+                df_ij <- as.data.frame(ldf[[i]][j]) 
+                df_ij$forecast_date <- rownames(df_ij)
+                row.names(df_ij) <- NULL
+                df2_ij <- df_ij %>% relocate(forecast_date) 
+                colnames(df2_ij)[2] <- gsub('X', '', colnames(df2_ij)[2])
+                df2_ij <- df2_ij %>% 
+                        pivot_longer(2, names_to = "location", values_to = "ImportanceScore")
+                df_j <- rbind(df_j, df2_ij)
+}
+        df_j <- df_j %>%
+                mutate(model=names(ldf[[1]][j]), horizon=4) %>% #<- horizon=1,2,3,4 !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                relocate(model)
+        df <- rbind(df, df_j)
+}
+
+# df1 <- df
+# df2 <- df
+# df3 <- df
+df4 <- df
+
+df_final <- rbind(df1, df2, df3, df4)
+saveRDS(df_final, "df_shapley_filledNAs.rds")
+```
+
+
+
+
+# Replace NAs in the initial data frame of Shapley values by trained ensembles by the newly obtained values 
+
+```{r}
+df_shapley_filledNAs <- readRDS("df_shapley_filledNAs.rds")
+
+path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/unity-shapley-trained-ver2"
+shapley_trained_df <- readRDS(paste0(path,"/output-combined/shapley_trained_all_df_long.rds"))
+```
+
+
+
+```{r}
+replace <- shapley_trained_df %>% 
+        filter(is.na(ImportanceScore)) %>% 
+        select(-ImportanceScore) %>% 
+        left_join(df_shapley_filledNAs, by = c("model", "horizon", "forecast_date", "location")) %>% 
+        filter(!is.na(ImportanceScore)) 
+ 
+shapley_trained_df_not_in_replace <- anti_join(shapley_trained_df, replace, 
+                                       by = c("model", "horizon", "forecast_date", "location")) 
+
+df_not_in_shapley_trained_df <- anti_join(df_shapley_filledNAs, shapley_trained_df, 
+                                       by = c("model", "horizon", "forecast_date", "location"))
+        
+shapley_trained_df_completed <- rbind(replace, 
+                                      shapley_trained_df_not_in_replace, 
+                                      df_not_in_shapley_trained_df) %>% 
+        arrange(model, horizon, forecast_date, location)
+
+saveRDS(shapley_trained_df_completed, "shapley_trained_completed.rds")
+```
+
+

@@ -1,0 +1,176 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Application-Difference between Lasomo and Lomo},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Application-Difference between Lasomo and Lomo}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+\hypertarget{find-a-model-that-started-submitting-forecasts-after-november-2020}{%
+\section{Find a model that started submitting forecasts after November
+2020}\label{find-a-model-that-started-submitting-forecasts-after-november-2020}}
+
+\hypertarget{submission-proportion}{%
+\section{Submission Proportion}\label{submission-proportion}}
+
+\hypertarget{compare-scores-when-na-values-are-replaced-by-the-worst-score}{%
+\section{Compare scores when NA values are replaced by the worst
+score}\label{compare-scores-when-na-values-are-replaced-by-the-worst-score}}
+
+\newpage
+
+\begin{verbatim}
+## Warning in !is.null(rmarkdown::metadata$output) && rmarkdown::metadata$output
+## %in% : 'length(x) = 2 > 1' in coercion to 'logical(1)'
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'kableExtra'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:dplyr':
+## 
+##     group_rows
+\end{verbatim}
+
+\begin{tabular}{l|r|r|r|r|r|r|r}
+\hline
+Model & WIS & relWIS & Rank & $\beta_t$ & $\beta_t$ & $\beta_t$ & $\beta_t$\\
+\hline
+BPagano-RtDriven & 40.24 & 0.77 & 0.59 & 2.81 & 2.59 & 0.71 & 0.36\\
+\hline
+COVIDhub-baseline & 52.11 & 1.00 & 0.42 & 0.10 & 0.62 & -0.62 & -0.14\\
+\hline
+CU-select & 47.28 & 0.91 & 0.49 & 1.64 & 1.41 & 0.24 & 0.13\\
+\hline
+GT-DeepCOVID & 42.80 & 0.82 & 0.54 & 1.87 & 1.93 & 0.17 & -0.03\\
+\hline
+Karlen-pypm & 41.24 & 0.79 & 0.59 & 3.11 & 3.63 & 0.92 & 1.21\\
+\hline
+MOBS-GLEAM_COVID & 45.83 & 0.88 & 0.52 & 1.06 & 1.32 & -0.21 & -0.11\\
+\hline
+PSI-DRAFT & 71.74 & 1.38 & 0.39 & -1.94 & -0.94 & -1.00 & -0.95\\
+\hline
+RobertWalraven-ESG & 49.81 & 0.96 & 0.49 & 0.94 & 1.11 & -0.09 & -0.15\\
+\hline
+UCSD_NEU-DeepGLEAM & 52.62 & 1.01 & 0.26 & -0.13 & 0.65 & -0.70 & -0.29\\
+\hline
+USC-SI_kJalpha & 51.71 & 0.99 & 0.49 & 1.23 & 0.85 & 0.21 & -0.49\\
+\hline
+\end{tabular}
+
+\textbf{Overall Observations:}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  The overall impression is that a model that already has good
+  predictive performance as a standalone model can also make important
+  contributions to both trained and untrained ensembles, helping the
+  ensemble achieve higher accuracy.
+\item
+  The overall performance of the Karlen-pypm model looks good as the
+  model's scores in all metrics are the best when replacing NAs with the
+  worst score, despite the low submission rate. The strategy of
+  replacing NAs with the average reflects how excellent the overall
+  performance of the Karlen-pypm model is. The Karlen-pypm model has the
+  best scores by far in all metrics.
+\item
+  Regardless of whether the ensembles were trained or not, the
+  importance scores for models based on the all-possible-subsets-out
+  algorithm (i.e., Shapley value) have similar trends as those based on
+  the leave-one-model-out algorithm.
+\item
+  The slight differences in weighted ensemble based mean importance
+  scores between the two approaches may be due to some randomness in the
+  estimation of weights during the training process (e.g.~when handling
+  missing values by replacing with the worst score, USC-SI\_kJalpha has
+  a little lower score than COVIDhub-baseline in LOMO\_wt unlike
+  Shapley\_wt).
+\item
+  Interestingly, the NA deletion strategy gives nearly the same score
+  trend as replacing NAs with the average score.
+\end{enumerate}
+
+\newpage
+
+\end{document}
