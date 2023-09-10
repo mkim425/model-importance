@@ -37,6 +37,8 @@ simdat %>%
                            #"50% qt"=quantile(importance, probs = 0.50),
                            "95% qt"=quantile(importance, probs = 0.95)) %>% 
         ggplot(aes(x=f3_bias, y =avg_imp, color=model)) +
+        annotate("rect", xmin=-1,xmax=1,ymin=-Inf,ymax=Inf, alpha=0.2, fill="#F8766D") +
+        annotate("rect", xmin=1,xmax=3,ymin=-Inf,ymax=Inf, alpha=0.2, fill="#619CFF") +
         geom_line() +
         geom_point() +
         labs(x="b (bias of forecaster 3)", y="Importance")
