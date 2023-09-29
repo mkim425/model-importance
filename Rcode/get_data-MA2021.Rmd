@@ -19,8 +19,9 @@ library(ggalt)  #for geom_dumbbell()
 library(pander)
 # get_all_models()
 # datatable(fdat)
+library(here)
+setwd(here())
 
-base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/main-data/"
 ```
 
 # MA, 2021-incidence death
@@ -34,9 +35,9 @@ truth_data <- load_truth(
 ) %>% filter(target_end_date >= as.Date("2021-01-01") &
                target_end_date < as.Date("2022-01-01")  )
 
-# write.csv(truth_data, file = paste0(base_path,"truth_MA_2021.csv"))
+# write.csv(truth_data, file = "../Data/truth_MA_2021.csv")
 
-truth.ma.2021 <- read.csv(paste0(base_path,"truth_MA_2021.csv")) %>% 
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
   select(target_end_date, value) %>% 
   rename(true_value = value)
 ```
@@ -57,7 +58,7 @@ forecasts_MA_2021 <- load_forecasts(
   filter(target_end_date >= as.Date("2021-01-01") &
            target_end_date < as.Date("2022-01-01")  )
 
-# write.csv(forecasts_MA_2021, paste0(base_path,"forecasts_MA_2021_hor1-4.csv"), row.names = FALSE)
+# write.csv(forecasts_MA_2021, "../Data/forecasts_MA_2021_hor1-4.csv", row.names = FALSE)
 ```
 
 
@@ -125,7 +126,7 @@ row.qt0.4_0822$value <- 62
 # complete the forecast dataset by adding the new rows
 fdat.ma.2021all <- rbind(fdat.multi.ma.2021all, row.qt0.4_0815, row.qt0.4_0822)
 
-# write.csv(fdat.ma.2021all,paste0(base_path,"fdat.ma.2021all.csv"), row.names = FALSE)
+# write.csv(fdat.ma.2021all, "../Data/fdat.ma.2021all.csv", row.names = FALSE)
 ```
 
 ## Ensemble forecasts
@@ -207,15 +208,15 @@ for (i in target.date){
 
 df.all.ma.2021 <- do.call(rbind.data.frame, mod.impo.list)
 
-# write.csv(df.all.ma.2021, paste0(base_path,"forecast_ma2021_full.csv"), row.names = FALSE)
+# write.csv(df.all.ma.2021, "../Data/forecast_ma2021_full.csv", row.names = FALSE)
 
 
 ## ----- Save the file as RDS after modifying the column names -----
 
-# forecast_ma2021_full <- read_csv(paste0(base_path,"forecast_ma2021_full.csv"))
+# forecast_ma2021_full <- read_csv("../Data/forecast_ma2021_full.csv")
 # original_cols <- colnames(forecast_ma2021_full)
 # colnames(forecast_ma2021_full)[7:29] <- paste("X" ,original_cols[7:29],sep="")
-# saveRDS(forecast_ma2021_full, paste0(base_path,"forecast_death_ma2021.rds"))
+# saveRDS(forecast_ma2021_full, "../Data/forecast_death_ma2021.rds")
 ```
 
 

@@ -31,6 +31,8 @@ library(ggprism)
 library(patchwork)
 # get_all_models()
 # datatable(fdat)
+library(here)
+setwd(here())
 ```
 
 # Load forecast data of death in MA in 2021
@@ -38,7 +40,7 @@ library(patchwork)
 This dataset contains 9 models, their importance score, and WIS on each target end date for 4-week ahead incident death.
 
 ```{r load_data_forecast_ma2021, echo = FALSE}
-forecast_ma2021_full <- readRDS("~/Documents/Dissertation/Ch1-model_importance/model-importance/data/leave-one-model-out/forecast_death_ma2021.rds")
+forecast_ma2021_full <- readRDS("../Data/forecast_death_ma2021.rds")
 
 forecast_ma2021 <- forecast_ma2021_full %>% 
   rename(f.median = 'X0.5') %>% 
