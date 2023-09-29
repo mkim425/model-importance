@@ -23,17 +23,18 @@ library(RColorBrewer)
 # get_all_models()
 # datatable(fdat)
 
-base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/main-data/"
+library(here)
+setwd(here())
 ```
 
 ```{r}
 # Truth data
-truth.ma.2021 <- read.csv(paste0(base_path,"truth_MA_2021.csv")) %>% 
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
   select(target_end_date, value) 
 truth.ma.2021$target_end_date <- as.Date(truth.ma.2021$target_end_date)
 
 # all forecasts for MA, 2021
-forecasts_MA_2021 <- read.csv(paste0(base_path,"forecasts_MA_2021_hor1-4.csv"))  
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv") 
 forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)        
 
 # extract data for only 3 models
@@ -91,55 +92,4 @@ ggplot(forcasts_3mod, aes(x = target_end_date)) +
 ```
 
 
-
-```{r JSM-probabilistic-forecasting}
-# extract data for only 3 models
-forcasts_1mod <- forecasts_MA_2021 %>% 
-        filter(model == "Karlen-pypm",
-               #horizon == 4,
-               forecast_date %in% c("2021-11-28", "2021-11-29")) %>% 
-        select(model, horizon, target_end_date, quantile, value) %>% 
-        filter(quantile %in% c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975)) %>% 
-        pivot_wider(names_from = quantile, values_from = value) %>% 
-        rename(lower95 = '0.025', upper95 = '0.975', 
-               lower80 = '0.1', upper80 = '0.9', 
-               lower50 = '0.25', upper50 = '0.75', 
-               value = '0.5')
-
-getPalette <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(4, "Blues"))
-ribbon_colors <- getPalette(4)
-
-ggplot(forcasts_1mod, aes(x = target_end_date)) +
-        # geom_ribbon(data=forcasts_1mod,
-        #             aes(ymin = lower95, ymax = upper95, fill="steelblue"),
-        #             alpha = 0.2) +
-        geom_ribbon(data=forcasts_1mod,
-                    aes(ymin = lower80, ymax = upper80, fill="steelblue"),
-                    alpha = 0.4) +
-        # geom_ribbon(data=forcasts_1mod, 
-        #             aes(ymin = lower50, ymax = upper50, fill="steelblue"),
-        #             alpha = 0.5) + 
-        geom_point(aes(y = value, color = "medians"), size=2) +
-        geom_line(aes(y = value, color = "medians"), size=1) +
-        geom_point(data = truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"),
-                   aes(y= value, group=1, color = "obs")) +
-        geom_line(data=truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"), 
-                  aes(y= value, group=1, color = "obs")) +
-        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
-        labs(y = "Weekly Deaths",
-             title = "Forecasts of COVID-19 deaths in Massachusetts on November 28, 2021", 
-             x="Date")  +
-        scale_color_manual(name = "", 
-                           values = c("medians"="#2171B5", 
-                                      "obs"="Black"), 
-                           labels = c("Forecast (Predictive median)", 
-                                      "Observed data before forecasting")) + 
-        scale_fill_manual(name="Prediction interval", values="steelblue") +
-        theme(axis.text.x = element_text(size=8, angle=90),
-              legend.title = element_blank(),
-              legend.text = element_text(size=10),
-              legend.position = "bottom", 
-              legend.direction = "vertical", 
-              legend.box = "horizontal")
-```
 
