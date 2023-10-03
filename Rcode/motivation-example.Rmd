@@ -69,6 +69,7 @@ ggplot(forcasts_3mod, aes(x = target_end_date)) +
         geom_line(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
                   aes(y= value, group=1, color = "truth"), 
                   alpha = 0.75) +
+        coord_cartesian(ylim = c(0, 500)) +
         scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
         labs(y = "Weekly Deaths",
              # title = "Forecasts of incident deaths in Massachusetts on November 28, 2021", 
@@ -90,6 +91,4 @@ ggplot(forcasts_3mod, aes(x = target_end_date)) +
               legend.box = "horizontal")
 
 ```
-
-
 
