@@ -15,13 +15,17 @@ library(pander)
 library(ggpubr) # ggarrange
 library(GGally) 
 suppressPackageStartupMessages(library(GGally)) # for 'ggpairs'
-basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance"
+library(here)
+setwd(here())
+```
+```{r}
+source("../Rcode/relative_wis.R") 
 ```
 
 # Find a model that started submitting forecasts after November 2020
 
 ```{r}
-# forecasts <- readRDS(paste0(basepath,"/main-data/forecast_data_aligned_death_10models_june20-nov22.rds"))
+# forecasts <- readRDS("../Data/forecast_data_aligned_death_10models_june20-nov22.rds")
 # 
 # # all models in the 'forecasts' data set
 # models <- forecasts$model %>% unique()
@@ -45,7 +49,7 @@ basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance"
 # Submission Proportion
 
 ```{r submission-proportion-wis, include=FALSE}
-# df_all_scores_extended <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended.rds")) 
+# df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
 # df_all_scores_extended %>% 
 #         group_by(model) %>% 
 #         summarise(na_prop = sum(is.na(wis))/21800,
@@ -62,7 +66,10 @@ For each model, location (l), time (t), horizon (h), replace NAs by the worst sc
 by max WIS over all non-NA models for WIS, by 0 for rank, and by min importance scores over all non-NA models.
 
 ```{r table}
-df_all_scores_extended_NAworst <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended_NAworst.rds")) 
+df_all_scores_extended_NAworst <- readRDS("../Data/df_all_scores_extended_NAworst.rds") 
+
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAworst)
 
 compare_NAworst <- df_all_scores_extended_NAworst %>% 
         group_by(model) %>% 
@@ -72,8 +79,8 @@ compare_NAworst <- df_all_scores_extended_NAworst %>%
                   meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
                   meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
                   meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
-        mutate(relWIS = meanWIS/(meanWIS[2])) %>% 
         ungroup() %>% 
+        left_join(relWIS, by="model") %>% 
         mutate(model = reorder(factor(model), meanWIS)) %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
@@ -159,7 +166,7 @@ p.pairs <- ggpairs(
 
 p.pairs 
 
-# pdf(file=paste0(basepath,"/main-Rcode/plot-relationship.pdf"), 
+# pdf(file="../Data/plot-relationship.pdf", 
 #     width = 10,
 #     height = 5)
 # p.pairs

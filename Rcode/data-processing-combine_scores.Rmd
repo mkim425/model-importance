@@ -18,29 +18,31 @@ library(lubridate)
 library(furrr)
 library(purrr)
 library(pander)
-basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance"
+library(here)
+setwd(here())
 ```
 
 
 ```{r read-forecasts-truth, include=FALSE}
-# forecast_data <- readRDS(paste0(basepath,"/main-data//forecast_data_aligned_death_10models_nov20-nov22.rds")) %>%  select(-c(2,6,7)) %>% 
-#         rename(forecast_date = reference_date, 
-#                target_type = target_variable,
-#                prediction = value) %>% # Change the column names so that they meet the requirement for 'score()' in scoringutils package 
-#         arrange(forecast_date, model)
-# 
-# truth_data <- readRDS(paste0(basepath,"/main-data/truth_data_upto2022.rds")) # %>% select("location", "target_end_date", "value")
-# 
-# truth <- truth_data %>% select(location, target_end_date, value) %>% rename(true_value = value)
+forecast_data <- readRDS("../Data/forecast_data_aligned_death_10models_nov20-nov22.rds") %>%  
+        select(-c(2,6,7)) %>%
+        rename(forecast_date = reference_date,
+               target_type = target_variable,
+               prediction = value) %>% # Change the column names so that they meet the requirement for 'score()' in scoringutils package
+        arrange(forecast_date, model)
+
+truth_data <- readRDS("../Data/truth_data_upto2022.rds") # %>% select("location", "target_end_date", "value")
+
+truth <- truth_data %>% select(location, target_end_date, value) %>% rename(true_value = value)
 ```
 
 # Get WIS 
 
 ```{r calc-wis, include=FALSE}
-# forecast_data <- readRDS(paste0(basepath,"/main-data/forecast_data_aligned_death_10models_nov20-nov22.rds")) %>% select(-c(2)) %>% 
+# forecast_data <- readRDS("../Data/forecast_data_aligned_death_10models_nov20-nov22.rds") %>% select(-c(2)) %>% 
 #         rename(forecast_date = reference_date) %>% # Change the column names  
 #         arrange(forecast_date, model)
-# truth_data <- readRDS(paste0(basepath,"/main-data/truth_data_upto2022.rds")) 
+# truth_data <- readRDS("../Data/truth_data_upto2022.rds")
 # 
 # scores <- score_forecasts(
 #   forecasts = forecast_data,
@@ -50,31 +52,31 @@ basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance"
 #   use_median_as_point = TRUE
 # )
 
-# saveRDS(scores, paste0(basepath, "/main-data/scores_wis.rds"))
+# saveRDS(scores, "../Data/scores_wis.rds")
 ```
 
 
 # Combine data frames of WIS and Importance scores with trained/untrained ensembles
 
 ```{r wis-shapley-both, include=FALSE}
-# scores_wis <- readRDS(paste0(basepath, "/main-data/scores_wis.rds"))
+# scores_wis <- readRDS("../Data/scores_wis.rds")
 # wis <- scores_wis %>% select(model, location, horizon, forecast_date, wis)
-shapley_trained <- readRDS(paste0(basepath,"/main-data/shapley_trained_completed.rds")) %>%
+shapley_trained <- readRDS("../Data/shapley_trained_completed.rds") %>%
         rename(ImpScore_shapley_wt = ImportanceScore) %>%
         transform(horizon=as.character(horizon),
                   forecast_date = as.Date(forecast_date))
 
-shapley_untrained <- readRDS(paste0(basepath,"/main-data/shapley_untrained_completed.rds")) %>%
+shapley_untrained <- readRDS("../Data/shapley_untrained_completed.rds") %>%
         rename(ImpScore_shapley_eq = ImportanceScore) %>%
         transform(horizon=as.character(horizon),
                   forecast_date = as.Date(forecast_date))
 
-lomo_untrained <- readRDS(paste0(basepath,"/main-data/lomo_untrained_completed.rds")) %>%
+lomo_untrained <- readRDS("../Data/lomo_untrained_completed.rds") %>%
         rename(ImpScore_lomo_eq = ImportanceScore) %>%
         transform(horizon=as.character(horizon),
                   forecast_date = as.Date(forecast_date))
 
-lomo_trained <- readRDS(paste0(basepath,"/main-data/lomo_trained_completed.rds")) %>%
+lomo_trained <- readRDS("../Data/lomo_trained_completed.rds") %>%
         rename(ImpScore_lomo_wt = ImportanceScore) %>%
         transform(horizon=as.character(horizon),
                   forecast_date = as.Date(forecast_date))
@@ -113,7 +115,7 @@ lomo_trained <- readRDS(paste0(basepath,"/main-data/lomo_trained_completed.rds")
 #         distinct() %>%
 #         mutate(std_rank = 1-(rank-1)/(n_mod-1))
 # 
-# saveRDS(df_all_scores_extended, paste0(basepath,"/main-data/df_all_scores_extended.rds"))
+# saveRDS(df_all_scores_extended, "../Data/df_all_scores_extended.rds")
 ```
 
 ```{r completeness-proportion, include=FALSE}
@@ -149,10 +151,9 @@ For each model, location (l), time (t), horizon (h), replace NAs
 
 - Importance: by min importance over all non-NA models
 
-- add relWIS
 
 ```{r}
-df_all_scores_extended <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended.rds")) 
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
 
 df_all_scores_extended_NAworst <- df_all_scores_extended %>% #select(-model) %>%
         dplyr::group_by(horizon, forecast_date, location) %>%
@@ -164,8 +165,12 @@ df_all_scores_extended_NAworst <- df_all_scores_extended %>% #select(-model) %>%
         mutate_at( vars(ImpScore_lomo_eq), ~replace_na(., min(., na.rm=TRUE)) ) %>%
         ungroup()
 
-saveRDS(df_all_scores_extended_NAworst, paste0(basepath,"/main-data/df_all_scores_extended_NAworst.rds"))
+saveRDS(df_all_scores_extended_NAworst, "../Data/df_all_scores_extended_NAworst.rds")
 ```
+
+
+
+
 
 
 
@@ -179,10 +184,9 @@ For each model, location (l), time (t), horizon (h), replace NAs
 
 - Importance: by mean importance over all non-NA models
 
-- add relWIS
 
 ```{r}
-df_all_scores_extended <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended.rds"))
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
 
 df_all_scores_extended_NAavg <- df_all_scores_extended %>% #select(-model) %>%
         dplyr::group_by(horizon, forecast_date, location) %>%
@@ -194,21 +198,19 @@ df_all_scores_extended_NAavg <- df_all_scores_extended %>% #select(-model) %>%
         mutate_at( vars(ImpScore_lomo_eq), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
         ungroup()
 
-saveRDS(df_all_scores_extended_NAavg, paste0(basepath,"/main-data/df_all_scores_extended_NAavg.rds"))
-
-
+saveRDS(df_all_scores_extended_NAavg, "../Data/df_all_scores_extended_NAavg.rds")
 ```
 
 
 # 3. Drop NAs
 
-Drop all NAs, and add relWIS
+Drop all NAs
 
 ```{r}
-df_all_scores_extended <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended.rds"))
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
 
 df_all_scores_extended_NAdrop <- df_all_scores_extended %>% drop_na()
-saveRDS(df_all_scores_extended_NAdrop, paste0(basepath,"/main-data/df_all_scores_extended_NAdrop.rds"))
+saveRDS(df_all_scores_extended_NAdrop, "../Data/df_all_scores_extended_NAdrop.rds")
 ```
 
 
