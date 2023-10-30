@@ -2,6 +2,8 @@
 
 library(covidData)
 library(covidHubUtils)
+library(here)
+setwd(here())
 
 dates <- seq.Date(from = as.Date("2020-06-01"), #2020-06-012020-11-02
                   to = as.Date("2022-11-28"),
@@ -37,5 +39,5 @@ colnames <- c("model", "forecast_date", "reference_date", "location", "horizon",
               "quantile", "value")
 
 forecast_data_aligned <- align_forecasts(d) %>% select(all_of(colnames))
-saveRDS(forecast_data_aligned, "~/Documents/Dissertation/Ch1-model_importance/model-importance/data/leave-all-subsets-of-models-out/forecast_data_aligned_death_10models_june20-nov22.rds")
+saveRDS(forecast_data_aligned, "../Data/forecast_data_aligned_death_10models_june20-nov22.rds")
 

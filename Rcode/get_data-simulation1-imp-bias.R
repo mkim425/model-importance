@@ -4,7 +4,8 @@
 library(tidyverse)
 source("Rcode/build_ensemble.R")
 library("stringr")
-base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/main-data/"
+library(here)
+setwd(here())
 
 simu_data_f3bias <- function(b){
         set.seed(2022)
@@ -97,7 +98,7 @@ list.df <- lapply(b, simu_data_f3bias)
 list.df.23qt <- do.call(rbind, list.df)
 
 write.csv(list.df.23qt, 
-          paste0(base_path,"simulation_f3bias.csv"), 
+          "../Data/simulation_f3bias.csv", 
           row.names = FALSE)
 saveRDS(list.df.23qt, 
-        paste0(base_path,"simulation_f3bias.rds"))
+        "../Data/simulation_f3bias.rds")

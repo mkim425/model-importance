@@ -51,11 +51,7 @@ forecast_ma2021 <- forecast_ma2021_full %>%
 # Plot of prediction intervals of 9 models and ensembles constructed by leave-one-model-out algorithm
 
 ```{r}
-#| fig.width = 10,  
-#| fig.height=6, 
-#| fig.cap = "\\label{fig:plot_dist_12.25}Forecast distributions on target end date 2021-12-25 (the endpoints represent the 0.01 and 0.99 quantiles, and the middle point represents the 0.5 quantile)                                              "
-
-truth.ma.2021 <- readRDS("~/Documents/Dissertation/Ch1-model_importance/model-importance/data/leave-one-model-out/truth_MA_2021.rds") %>% 
+truth.ma.2021 <- read_csv("../Data/truth_MA_2021.csv") %>% 
   select(target_end_date, value) %>% 
   rename(truth = value)
 
@@ -149,14 +145,14 @@ p3 <- d2.copy %>%
 ```
 
 ```{r}
-pdf(file="~/Documents/Dissertation/Ch1-model_importance/model-importance/main-Rcode/PI1.pdf",
+pdf(file="../Plot/PI1.pdf",
     width = 6,
     height = 3)
 p1
 dev.off()
 ```
 ```{r}
-pdf(file="~/Documents/Dissertation/Ch1-model_importance/model-importance/main-Rcode/PI2.pdf",
+pdf(file="../Plot/PI2.pdf",
     width = 8,
     height = 4)
 p2
@@ -188,18 +184,16 @@ p.imp_wis.1225 <- temp.dat %>%
   theme(legend.position = "none")
 
 
-pdf(file="~/Documents/Dissertation/Ch1-model_importance/model-importance/main-Rcode/plot-wis_imp_20211225.pdf",
+pdf(file="../Plot/plot-wis_imp_20211225.pdf",
     width = 10,
     height = 5)
 p.imp_wis.1225 
 dev.off()
 ```
+
 # Scatterplots of importance vs. WIS by model
 
 ```{r plot_importance-vs-wis-by-model, fig.pos='h', fig.cap="left-aligned"}
-#| fig.width = 10,  
-#| fig.height=6, 
-
 p <- forecast_ma2021 %>% 
   filter(!grepl('Ens', model)) %>% 
   mutate(target_end_date=str_remove(target_end_date, "2021-")) %>% 
@@ -211,7 +205,7 @@ p <- forecast_ma2021 %>%
           y = "Importance") + 
   theme(legend.position = "none")
 
-pdf(file="~/Documents/Dissertation/Ch1-model_importance/model-importance/main-Rcode/scatterplot-wis_imp2021.pdf",
+pdf(file="../Plot/scatterplot-wis_imp2021.pdf",
     width = 10,
     height = 5)
 p

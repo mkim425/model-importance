@@ -7,6 +7,8 @@
 library(tidyverse)
 source("main-Rcode/build_ensemble.R")
 library("stringr")
+library(here)
+setwd(here())
 
 simu_data_f3dispersion <- function(s){
         set.seed(2022)
@@ -96,9 +98,8 @@ list.df <- lapply(s, simu_data_f3dispersion)
 list.df.23qt <- do.call(rbind, list.df)
 print("created a dataset")
 
-base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance/main-data/"
 write.csv(list.df.23qt, 
-          paste0(base_path,"simulation_f3sharp.csv"), 
+          "../Data/simulation_f3sharp.csv", 
           row.names = FALSE)
 saveRDS(list.df.23qt, 
-        paste0(base_path,"simulation_f3sharp.rds"))
+        "../Data/simulation_f3sharp.rds")

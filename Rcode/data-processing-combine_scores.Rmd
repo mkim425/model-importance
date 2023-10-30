@@ -169,11 +169,6 @@ saveRDS(df_all_scores_extended_NAworst, "../Data/df_all_scores_extended_NAworst.
 ```
 
 
-
-
-
-
-
 # 2. Replace NAs with the average score
 
 For each model, location (l), time (t), horizon (h), replace NAs 

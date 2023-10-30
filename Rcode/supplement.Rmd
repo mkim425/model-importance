@@ -15,16 +15,23 @@ library(pander)
 library(ggpubr) # ggarrange
 library(GGally) 
 suppressPackageStartupMessages(library(GGally)) # for 'ggpairs'
-basepath="~/Documents/Dissertation/Ch1-model_importance/model-importance"
+library(here)
+setwd(here())
 ```
 
+```{r}
+source("../Rcode/relative_wis.R") 
+```
 
 # Replace NAs with the average score
 
 For each model, location (l), time (t), horizon (h), replace NAs by the average score; by mean WIS over all non-NA models for WIS, by 0.5 for rank, by mean importance over all non-NA models.
 
 ```{r NAavg-table}
-df_all_scores_extended_NAavg <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended_NAavg.rds"))
+df_all_scores_extended_NAavg <- readRDS("../Data/df_all_scores_extended_NAavg.rds")
+
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAavg)
 
 compare_NAavg <- df_all_scores_extended_NAavg %>% 
         group_by(model) %>% 
@@ -34,8 +41,8 @@ compare_NAavg <- df_all_scores_extended_NAavg %>%
                   meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
                   meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
                   meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
-        mutate(relWIS = meanWIS/(meanWIS[2])) %>% 
         ungroup() %>% 
+        left_join(relWIS, by="model") %>% 
         mutate(model = reorder(factor(model), meanWIS)) %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
@@ -118,11 +125,11 @@ p.pairs.NAavg <- ggpairs(
 
 p.pairs.NAavg 
 
-# pdf(file=paste0(basepath,"/main-Rcode/plot-relationship-NAavg.pdf"), 
-#     width = 10,
-#     height = 5)
-# p.pairs.NAavg
-# dev.off()
+pdf(file="../Plot/plot-corr-NAavg.pdf",
+    width = 10,
+    height = 5)
+p.pairs.NAavg
+dev.off()
 ```
 
 # Drop NAs
@@ -130,9 +137,11 @@ p.pairs.NAavg
 Drop all NAs
 
 ```{r NAdrop-table}
-df_all_scores_extended <- readRDS(paste0(basepath,"/main-data/df_all_scores_extended.rds"))
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
 df_all_scores_extended_NAdrop <- df_all_scores_extended %>% drop_na()
 
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAdrop)
 
 compare_NAdrop <- df_all_scores_extended_NAdrop %>% 
         group_by(model) %>% 
@@ -142,8 +151,8 @@ compare_NAdrop <- df_all_scores_extended_NAdrop %>%
                   meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
                   meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
                   meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
-        mutate(relWIS = meanWIS/(meanWIS[2])) %>% 
         ungroup() %>% 
+        left_join(relWIS, by="model") %>%
         mutate(model = reorder(factor(model), meanWIS)) %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
@@ -222,11 +231,11 @@ p.pairs.NAdrop <- ggpairs(
 
 p.pairs.NAdrop 
 
-# pdf(file=paste0(basepath,"/main-Rcode/plot-relationship-NAdrop.pdf"), 
-#     width = 10,
-#     height = 5)
-# p.pairs.NAdrop
-# dev.off()
+pdf(file="../Plot/plot-corr-NAdrop.pdf",
+    width = 10,
+    height = 5)
+p.pairs.NAdrop
+dev.off()
 ```
 
 

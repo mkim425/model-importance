@@ -2,10 +2,11 @@ suppressPackageStartupMessages(library(tidyverse))
 library(dplyr)
 library(magrittr)
 library(lubridate)
+library(here)
+setwd(here())
 
-base_path <- "~/Documents/Dissertation/Ch1-model_importance/model-importance"
 # Read data
-forecast_data <- readRDS(paste0(base_path,"/data/leave-all-subsets-of-models-out/forecast_data_aligned_death_10models_june20-nov22.rds")) %>% 
+forecast_data <- readRDS("../Data/forecast_data_aligned_death_10models_june20-nov22.rds") %>% 
         select(c(1, 3:5, 7:12)) %>% 
         rename(forecast_date = reference_date) %>% # Change the col name for convenient calculation using importance score function
         arrange(forecast_date, model)
@@ -22,7 +23,7 @@ for (h in 1:4){
                 dat <- forecast_data %>%
                         filter(horizon == h,
                                forecast_date == date)
-                saveRDS(dat, paste0(base_path,"/unity-Shapley-untrained/data/forecast_data-horizon",h,"-",date,".rds"))
+                saveRDS(dat, "../Data/forecast_data-horizon",h,"-",date,".rds")
         }
                 
 }
