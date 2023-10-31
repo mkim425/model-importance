@@ -1,0 +1,182 @@
+---
+title: "Application-Difference between Lasomo and Lomo"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+suppressPackageStartupMessages(library(tidyverse))
+library(dplyr)
+library(magrittr)
+library(lubridate)
+library(pander)
+library(ggpubr) # ggarrange
+library(GGally) 
+suppressPackageStartupMessages(library(GGally)) # for 'ggpairs'
+library(here)
+setwd(here())
+```
+```{r}
+source("../Rcode/relative_wis.R") 
+```
+
+# Find a model that started submitting forecasts after November 2020
+
+```{r}
+# forecasts <- readRDS("../Data/forecast_data_aligned_death_10models_june20-nov22.rds")
+# 
+# # all models in the 'forecasts' data set
+# models <- forecasts$model %>% unique()
+# 
+# # models before November 2020
+# models_before_nov2020 <- forecasts %>% 
+#         filter(forecast_date < "2020-11-01") %>% 
+#         select(model) %>% pull() %>% unique()
+# 
+# # model that submitted forecasts after November 1st, 2020
+# setdiff(models, models_before_nov2020 )
+# # [1] "USC-SI_kJalpha" 
+# 
+# # First forecast date of the model "USC-SI_kJalpha"
+# forecasts %>% 
+#         filter(model == "USC-SI_kJalpha") %>% 
+#         select(forecast_date) %>% pull() %>% unique() %>% min()
+# # [1] "2020-11-15"
+```
+
+# Submission Proportion
+
+```{r submission-proportion-wis, include=FALSE}
+# df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
+# df_all_scores_extended %>% 
+#         group_by(model) %>% 
+#         summarise(na_prop = sum(is.na(wis))/21800,
+#                   submission_proportion = sum(!is.na(wis))/21800,
+#                   submission_count = sum(!is.na(wis))) %>% 
+#         ungroup() %>% 
+#         arrange(desc(submission_proportion))
+```
+
+
+# Compare scores when NA values are replaced by the worst score
+
+For each model, location (l), time (t), horizon (h), replace NAs by the worst scores; 
+by max WIS over all non-NA models for WIS, by 0 for rank, and by min importance scores over all non-NA models.
+
+```{r table}
+df_all_scores_extended_NAworst <- readRDS("../Data/df_all_scores_extended_NAworst.rds") 
+
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAworst)
+
+compare_NAworst <- df_all_scores_extended_NAworst %>% 
+        group_by(model) %>% 
+        summarise(meanWIS = mean(wis),
+                  meanRank = mean(std_rank),
+                  meanImpScore_shapley_eq = mean(ImpScore_shapley_eq),
+                  meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
+                  meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
+                  meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
+        ungroup() %>% 
+        left_join(relWIS, by="model") %>% 
+        mutate(model = reorder(factor(model), meanWIS)) %>%
+        arrange(meanWIS) %>% 
+        relocate(relWIS, .after = meanWIS) %>% 
+        mutate_if(is.numeric, ~round(., 2))
+
+compare_NAworst %>% 
+        rename(WIS=meanWIS, 
+               Rank=meanRank, 
+               Shapley.eq = meanImpScore_shapley_eq,
+               Shapley.wt = meanImpScore_shapley_wt,
+               LOMO.eq = meanImpScore_lomo_eq,
+               LOMO.wt = meanImpScore_lomo_wt) %>% 
+        pander(caption = "Summary of mean WIS, rank, importance scores 
+               with untrained and trained ensembles 
+               by replaceing NA values with the worst score.",
+               justify = "right", 
+               split.table = Inf)
+```
+
+
+```{r plots, include=FALSE}
+g1 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanWIS), color = "deeppink") 
+g2 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanRank), color = "green3") +
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(x=NULL)
+g3 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_eq), color = "red") +
+        labs(y="Shapley.eq") 
+g4 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_eq), color = "blue") +
+        labs(y="LOMO.eq") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+g5 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_wt), color = "red2") +
+        labs(y="Shapley.wt") 
+g6 <- compare_NAworst %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_wt), color = "blue2") +
+        labs(y="LOMO.wt") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+
+remove_x <- theme(
+  axis.text.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.x = element_blank()
+)
+
+library(ggpubr) #annotate_figure
+
+plots_wis_rk <- ggarrange(g1 + remove_x, g2,ncol = 1, heights = c(0.65, 1))  
+annotate_figure(plots_wis_rk, top = text_grob("mean WIS and mean Rank", 
+               face = "bold", size = 14))
+
+plots_untrained <- ggarrange(g3 + remove_x, g4,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_untrained, top = text_grob("mean Importance Score (untrained) ", 
+               face = "bold", size = 14))
+
+plots_trained <- ggarrange(g5 + remove_x, g6,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) ", 
+               face = "bold", size = 14))
+```
+
+
+# Summary of relationships between metrics 
+
+```{r pairs-plot-NAworst, message=FALSE}
+d_NAworst <- compare_NAworst %>% 
+        mutate(neg_WIS=-meanWIS) %>% 
+        relocate(neg_WIS, .after=model) 
+
+colnames <- c(paste0("-WIS"), paste0("Rank"), 
+              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
+              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+
+p.pairs <- ggpairs(
+  d_NAworst %>% select(c(2,5:9)),
+  columnLabels = colnames,
+  labeller = "label_parsed"
+)
+
+p.pairs 
+
+# pdf(file="../Plot/plot-corr-NAworst.pdf", 
+#     width = 10,
+#     height = 5)
+# p.pairs
+# dev.off()
+```
+
+
+
+
+
+
+
+

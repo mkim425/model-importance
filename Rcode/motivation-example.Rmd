@@ -1,0 +1,94 @@
+---
+title: "Motivating example"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(covidHubUtils)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(doParallel)
+library(tidyverse)
+theme_set(theme_bw())
+library(pander)
+library(DT)
+library(ggalt)  #for geom_dumbbell()
+library(pander)
+library(RColorBrewer)
+# get_all_models()
+# datatable(fdat)
+
+library(here)
+setwd(here())
+```
+
+```{r}
+# Truth data
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
+  select(target_end_date, value) 
+truth.ma.2021$target_end_date <- as.Date(truth.ma.2021$target_end_date)
+
+# all forecasts for MA, 2021
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv") 
+forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)        
+
+# extract data for only 3 models
+forcasts_3mod <- forecasts_MA_2021 %>% 
+        filter(model %in% c("CovidAnalytics-DELPHI", "Karlen-pypm", "UMass-MechBayes"),
+               #horizon == 4,
+               forecast_date %in% c("2021-11-28", "2021-11-29")) %>% 
+        select(model, horizon, target_end_date, quantile, value) %>% 
+        filter(quantile %in% c(0.025, 0.5, 0.975)) %>% 
+        pivot_wider(names_from = quantile, values_from = value) %>% 
+        rename(lower = '0.025', upper = '0.975', value = '0.5')
+
+```
+
+
+```{r}
+ggplot(forcasts_3mod, aes(x = target_end_date)) +
+        facet_grid(~model) +
+        geom_point(aes(y = value, color = "medians"), size=2) +
+        geom_line(aes(y = value, color = "medians"), size=1) +
+        geom_ribbon(data=forcasts_3mod, 
+                    aes(ymin = lower, ymax = upper, 
+                    fill = "#3388FF"),
+                    alpha = 0.5) +
+        geom_point(data = truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"),
+                   aes(y= value, group=1, color = "obs")) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"), 
+                  aes(y= value, group=1, color = "obs")) +
+        geom_point(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  shape=1, alpha = 1) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  alpha = 0.75) +
+        coord_cartesian(ylim = c(0, 500)) +
+        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
+        labs(y = "Weekly Deaths",
+             # title = "Forecasts of incident deaths in Massachusetts on November 28, 2021", 
+             x="Date")  +
+        scale_color_manual(name = "", 
+                           values = c("medians"="DodgerBlue", 
+                                      "obs"="Black", 
+                                      "truth"="Black"), 
+                           labels = c("Forecast (Predictive median)", 
+                                      "Observed data before forecasting", 
+                                      "Eventually observed value")) + 
+        scale_fill_manual("", values="#3388FF", 
+                          labels = "95% Prediction interval") +
+        theme(axis.text.x = element_text(size=8, angle=90),
+              legend.title = element_blank(),
+              legend.text = element_text(size=10),
+              legend.position = "bottom", 
+              legend.direction = "vertical", 
+              legend.box = "horizontal")
+
+```
+

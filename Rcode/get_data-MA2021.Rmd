@@ -1,0 +1,247 @@
+---
+title: "get_data: forecasts for MA, 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(covidHubUtils)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(doParallel)
+library(tidyverse)
+theme_set(theme_bw())
+library(pander)
+library(DT)
+library(ggalt)  #for geom_dumbbell()
+library(pander)
+# get_all_models()
+# datatable(fdat)
+library(here)
+setwd(here())
+
+```
+
+# MA, 2021-incidence death
+
+## Truth data: MA, 2021
+```{r truth-ma-2021}
+truth_data <- load_truth(
+  truth_source = "JHU",
+  target_variable = "inc death",
+  locations = "25"
+) %>% filter(target_end_date >= as.Date("2021-01-01") &
+               target_end_date < as.Date("2022-01-01")  )
+
+# write.csv(truth_data, file = "../Data/truth_MA_2021.csv")
+
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
+  select(target_end_date, value) %>% 
+  rename(true_value = value)
+```
+
+## Motivating example: Forecasts for MA, 2021 (horizon 1-4)  
+
+```{r}
+forecasts_MA_2021 <- load_forecasts(
+  # models = ,
+  # dates = ,    #forecast date
+  source = "zoltar",
+  date_window_size = 6,
+  locations = "25",
+  types = c("quantile"),
+  verbose = FALSE,
+  targets = paste(1:4, "wk ahead inc death")
+) %>%
+  filter(target_end_date >= as.Date("2021-01-01") &
+           target_end_date < as.Date("2022-01-01")  )
+
+# write.csv(forecasts_MA_2021, "../Data/forecasts_MA_2021_hor1-4.csv", row.names = FALSE)
+```
+
+
+## Cast study: Forecasts for MA, 2021 (horizon 4)  
+
+```{r forecasts-all-models}
+forecasts_multiple_MA_2021 <- load_forecasts(
+  # models = ,
+  # dates = ,    #forecast date
+  source = "zoltar",
+  date_window_size = 6,
+  locations = "25",
+  types = c("quantile"),
+  verbose = FALSE,
+  targets = paste(4, "wk ahead inc death")
+) %>%
+  filter(target_end_date >= as.Date("2021-01-01") &
+           target_end_date < as.Date("2022-01-01")  )
+
+fdat.multi.ma.2021 <- forecasts_multiple_MA_2021
+```
+
+```{r find_models_forecast_all2021, include=FALSE}
+model.list <- fdat.multi.ma.2021 %>% select(model) %>% unique() 
+num.wk = c()
+j=0
+for (i in model.list$model){
+  j=j+1
+  num.wk[j] <- fdat.multi.ma.2021 %>% 
+    filter(model == i) %>% 
+    select(target_end_date) %>% 
+    unique() %>% nrow()
+}
+models.52wks <- data.frame(model = model.list$model, num.wk = num.wk) %>% 
+  filter(num.wk == 52) %>% 
+  select(model)
+models.ma.allwks2021 <- models.52wks$model
+```
+```{r get_forecastdata_MA_2021all, include=FALSE}
+fdat.multi.ma.2021all <- fdat.multi.ma.2021 %>% 
+  filter(model %in% models.ma.allwks2021) %>% select(-1) %>% 
+  filter_at(.vars= vars(model), all_vars(!grepl('ensemble',.))) #exclude ensemble models
+```
+
+```{r impute_missing_quantile, include=FALSE}
+# # Find the models with missing quantile values
+# fdat.multi.ma.2021all %>% group_by(model, forecast_date) %>% summarise(count=n()) %>% filter(count != 23)
+# 
+# fdat.multi.ma.2021all %>% filter(model == "UMass-MechBayes", forecast_date =="2021-08-15") %>% select(quantile, value) # => quantile 0.4 is missing
+# fdat.multi.ma.2021all %>% filter(model == "UMass-MechBayes", forecast_date =="2021-08-22") %>% select(quantile, value) # => quantile 0.4 is missing
+
+# impute the value for quantile 0.4 with the mean of values of qt 0.35 and 0.45
+row.qt0.4_0815 <- fdat.multi.ma.2021all %>% 
+  filter(model == "UMass-MechBayes", forecast_date =="2021-08-15", quantile == 0.350) 
+row.qt0.4_0815$quantile <- 0.400
+row.qt0.4_0815$value <- 167
+
+row.qt0.4_0822 <- fdat.multi.ma.2021all %>% 
+  filter(model == "UMass-MechBayes", forecast_date =="2021-08-22", quantile == 0.350) 
+row.qt0.4_0822$quantile <- 0.400
+row.qt0.4_0822$value <- 62
+```
+
+```{r complete-forecasts-ma2021}
+# complete the forecast dataset by adding the new rows
+fdat.ma.2021all <- rbind(fdat.multi.ma.2021all, row.qt0.4_0815, row.qt0.4_0822)
+
+# write.csv(fdat.ma.2021all, "../Data/fdat.ma.2021all.csv", row.names = FALSE)
+```
+
+## Ensemble forecasts
+
+```{r define_ftn_construct_ensembles}
+fdat.mean.ensemble <- function(data, target_date){
+  dat <- data %>% 
+    filter(target_end_date == target_date)
+ 
+  # Calculate equally-weighted mean ensemble from all models
+  ens.all <- dat %>% 
+    group_by(quantile) %>% 
+    summarise(value = mean(value)) %>% 
+    mutate(model="Ensemble.all") %>% 
+    relocate(model) 
+  
+  fdat.ens <- rbind(dat %>% select(model, quantile, value), ens.all)
+  model.names = unique(data$model)
+  for (i in model.names){
+          ens.part <- dat %>% 
+            filter(model != i) %>% 
+            group_by(quantile) %>% 
+            summarise(value=mean(value)) %>% 
+            mutate(model=paste0("Ens.wo.", i)) %>% 
+            relocate(model)
+          fdat.ens <- rbind(fdat.ens, ens.part)
+  }
+  # wide data frame
+  fdat.ens.wide <- fdat.ens %>% 
+    pivot_wider(names_from = quantile)
+  return(fdat.ens.wide)
+}
+```
+
+
+```{r construct_dataframe_MA_2021, warning=FALSE, include=FALSE}
+location <- fdat.ma.2021all$abbreviation %>% unique()
+models <- fdat.ma.2021all$model %>% unique()
+n.mod <- length(models)
+target <- "4wk ahead inc death"
+y.val <- truth.ma.2021$true_value
+alpha0 <- 1
+alpha <- c(seq(0.9, 0.1, by=-0.1), 0.05, 0.02)
+K <- length(alpha)
+w0=1/2
+w1=alpha/2
+# weights for over,under prediction#####
+w = c(w0*alpha0/2,w1)*2/c(alpha0,alpha)
+
+target.date <- truth.ma.2021$target_end_date
+mod.impo.list = list()
+k=0
+for (i in target.date){
+  k=k+1
+  y = y.val[k]
+  df <- fdat.mean.ensemble(fdat.ma.2021all, i)
+
+  df.wis <- as.data.frame(
+    df %>% 
+      mutate(dispersion = 1/(K+1/2) * t( w1 %*% t(df[13+c(1:11)]-df[13-c(1:11)]) ),
+             overpred = 1/(K+1/2) * t( w %*% t( (df[13-c(0:11)] - y)*as.numeric( y < df[13-c(0:11)]) ) ),
+             underpred = 1/(K+1/2) * t( w %*% t( (y-df[13+c(0:11)])*as.numeric( y > df[13+c(0:11)]) ) ) ) %>% 
+      mutate(wis = dispersion + overpred + underpred) %>%
+      relocate(c(model, wis, dispersion, overpred, underpred), .before = '0.01')
+  )
+
+  ens.importance = round( -rep(df.wis[which(df.wis$'model' == 'Ensemble.all'), 2], n.mod) +
+                                df.wis[which(df.wis$'model' == 'Ensemble.all') + 1: + n.mod, 2], 2)
+    
+    df.wis.importance.all <- df.wis %>%
+    mutate(importance = c(ens.importance, rep(NA, 9+1))) %>%
+    relocate(c(importance), .before = wis) %>% 
+    mutate(target_end_date = i,
+           location = location,
+           target = target)
+
+  mod.impo.list[[k]] <- df.wis.importance.all
+}
+
+df.all.ma.2021 <- do.call(rbind.data.frame, mod.impo.list)
+
+# write.csv(df.all.ma.2021, "../Data/forecast_ma2021_full.csv", row.names = FALSE)
+
+
+## ----- Save the file as RDS after modifying the column names -----
+
+# forecast_ma2021_full <- read_csv("../Data/forecast_ma2021_full.csv")
+# original_cols <- colnames(forecast_ma2021_full)
+# colnames(forecast_ma2021_full)[7:29] <- paste("X" ,original_cols[7:29],sep="")
+# saveRDS(forecast_ma2021_full, "../Data/forecast_death_ma2021.rds")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

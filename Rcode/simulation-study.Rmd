@@ -1,0 +1,100 @@
+---
+title: "Simulation Study"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(covidHubUtils)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(ggplot2)
+library(doParallel)
+library(tidyverse)
+theme_set(theme_bw())
+library(pander)
+library(DT)
+library(ggalt)  #for geom_dumbbell()
+library(pander)
+# get_all_models()
+# datatable(fdat)
+library(here)
+setwd(here())
+```
+
+## Association between a component forecaster's bias and importance
+
+```{r plot_imp_bias}
+simdat <- readRDS("../Data/simulation_f3bias.rds")
+
+simdat %>% 
+        dplyr::select(model, f3_bias, importance, dispersion) %>%
+        dplyr::group_by(f3_bias, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
+        ggplot(aes(x=f3_bias, y =avg_imp, shape=model)) +
+        scale_shape_manual(values = c(16, 17, 5)) +
+        annotate("rect", xmin=-1,xmax=1,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#F8766D") +
+        annotate("rect", xmin=1,xmax=3,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#619CFF") +
+        geom_line() +
+        geom_point() +
+        labs(x="b (bias of forecaster 3)", y="Importance")
+```
+
+
+
+
+
+## Association between component forecaster dispersion and importance
+
+```{r plot_imp_dispersion}
+simdat <- readRDS("../Data/simulation_f3sharp.rds")
+
+simdat %>% 
+        dplyr::select(model, f3_sharpness, importance, dispersion) %>%
+        dplyr::group_by(f3_sharpness, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
+        ggplot(aes(x=f3_sharpness, y =avg_imp, shape=model)) +
+        scale_shape_manual(values = c(16, 17, 5)) +
+        annotate("rect", xmin=0,xmax=0.7,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#F8766D") +
+        annotate("rect", xmin=0.7,xmax=3,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#619CFF") +
+        geom_line() +
+        geom_point() +
+        labs(x="s (standard deviation of forecaster 3)",
+             #title="Importance of three forecasters by different dispersion of forecaster 3", 
+             y="Importance") 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

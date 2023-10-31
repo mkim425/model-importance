@@ -1,0 +1,211 @@
+---
+title: "Data Processing - Combine all score data into a single dataframe"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# library(covidData)
+library(scoringutils)
+library(covidHubUtils)
+library(hubEnsembles)
+suppressPackageStartupMessages(library(tidyverse))
+library(dplyr)
+library(magrittr)
+library(lubridate)
+library(furrr)
+library(purrr)
+library(pander)
+library(here)
+setwd(here())
+```
+
+
+```{r read-forecasts-truth, include=FALSE}
+forecast_data <- readRDS("../Data/forecast_data_aligned_death_10models_nov20-nov22.rds") %>%  
+        select(-c(2,6,7)) %>%
+        rename(forecast_date = reference_date,
+               target_type = target_variable,
+               prediction = value) %>% # Change the column names so that they meet the requirement for 'score()' in scoringutils package
+        arrange(forecast_date, model)
+
+truth_data <- readRDS("../Data/truth_data_upto2022.rds") # %>% select("location", "target_end_date", "value")
+
+truth <- truth_data %>% select(location, target_end_date, value) %>% rename(true_value = value)
+```
+
+# Get WIS 
+
+```{r calc-wis, include=FALSE}
+# forecast_data <- readRDS("../Data/forecast_data_aligned_death_10models_nov20-nov22.rds") %>% select(-c(2)) %>% 
+#         rename(forecast_date = reference_date) %>% # Change the column names  
+#         arrange(forecast_date, model)
+# truth_data <- readRDS("../Data/truth_data_upto2022.rds")
+# 
+# scores <- score_forecasts(
+#   forecasts = forecast_data,
+#   return_format = "wide",
+#   metrics = "wis",
+#   truth = truth_data,
+#   use_median_as_point = TRUE
+# )
+
+# saveRDS(scores, "../Data/scores_wis.rds")
+```
+
+
+# Combine data frames of WIS and Importance scores with trained/untrained ensembles
+
+```{r wis-shapley-both, include=FALSE}
+# scores_wis <- readRDS("../Data/scores_wis.rds")
+# wis <- scores_wis %>% select(model, location, horizon, forecast_date, wis)
+shapley_trained <- readRDS("../Data/shapley_trained_completed.rds") %>%
+        rename(ImpScore_shapley_wt = ImportanceScore) %>%
+        transform(horizon=as.character(horizon),
+                  forecast_date = as.Date(forecast_date))
+
+shapley_untrained <- readRDS("../Data/shapley_untrained_completed.rds") %>%
+        rename(ImpScore_shapley_eq = ImportanceScore) %>%
+        transform(horizon=as.character(horizon),
+                  forecast_date = as.Date(forecast_date))
+
+lomo_untrained <- readRDS("../Data/lomo_untrained_completed.rds") %>%
+        rename(ImpScore_lomo_eq = ImportanceScore) %>%
+        transform(horizon=as.character(horizon),
+                  forecast_date = as.Date(forecast_date))
+
+lomo_trained <- readRDS("../Data/lomo_trained_completed.rds") %>%
+        rename(ImpScore_lomo_wt = ImportanceScore) %>%
+        transform(horizon=as.character(horizon),
+                  forecast_date = as.Date(forecast_date))
+```
+
+
+```{r combine-wis-shapleys, include=FALSE}
+# df_all_scores <- shapley_untrained %>%
+#         left_join(shapley_trained, by = c("model", "horizon", "forecast_date", "location")) %>%
+#         left_join(wis, by = c("model", "horizon", "forecast_date", "location")) %>%
+#         left_join(lomo_untrained, by = c("model", "horizon", "forecast_date", "location")) %>%
+#         left_join(lomo_trained, by = c("model", "horizon", "forecast_date", "location"))
+```
+
+
+# Get rank
+
+```{r extend-data-to-include-std_rank, include=FALSE}
+# # Add columns to calculate standardized WIS ranks
+# num_mod_col <- df_all_scores %>%
+#         dplyr::group_by(horizon, forecast_date, location) %>%
+#         summarise(n_mod = sum(!is.na(wis)) , .groups = "drop")
+# 
+# rank_col <- df_all_scores %>% select(-model) %>%
+#         dplyr::group_by(horizon, forecast_date, location) %>%
+#         mutate(rank = rank(wis,na.last = "keep")) %>%
+#         ungroup()
+# 
+# df_all_scores_extended <- df_all_scores %>%
+#         left_join(num_mod_col,
+#                   by = c("horizon", "forecast_date", "location")) %>%
+#         left_join(rank_col,
+#                   by = c("horizon", "forecast_date", "location", "wis",
+#                          "ImpScore_shapley_wt", "ImpScore_shapley_eq",
+#                          "ImpScore_lomo_wt","ImpScore_lomo_eq")) %>%
+#         distinct() %>%
+#         mutate(std_rank = 1-(rank-1)/(n_mod-1))
+# 
+# saveRDS(df_all_scores_extended, "../Data/df_all_scores_extended.rds")
+```
+
+```{r completeness-proportion, include=FALSE}
+# (df_all_scores_extended %>% complete.cases() %>% sum()) / 218000
+
+# => 0.9522752
+```
+
+
+
+```{r NA-proportion-all-metrics, include=FALSE}
+# df_all_scores_extended %>% 
+#         group_by(model) %>% 
+#         summarise(na_prop_wis = sum(is.na(wis))/21800,
+#                   na_prop_shapley_eq = sum(is.na(ImpScore_shapley_eq))/21800,
+#                   na_prop_shapley_wt = sum(is.na(ImpScore_shapley_wt))/21800,
+#                   na_prop_lomo_eq = sum(is.na(ImpScore_lomo_eq))/21800,
+#                   na_prop_lomo_wt = sum(is.na(ImpScore_lomo_wt))/21800) %>% 
+#         ungroup()
+
+# => na proportion of USC-SI_kJalpha are different when using equally weighted ensemble from when using trained ensemble because we don't include a model that is in the current forecasts set but not in the training set. 
+```
+
+
+
+# 1. Replace NAs with the worst score
+
+For each model, location (l), time (t), horizon (h), replace NAs 
+
+- WIS : by max WIS over all non-NA models
+
+- Rank : with zero
+
+- Importance: by min importance over all non-NA models
+
+
+```{r}
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
+
+df_all_scores_extended_NAworst <- df_all_scores_extended %>% #select(-model) %>%
+        dplyr::group_by(horizon, forecast_date, location) %>%
+        mutate_at( vars(wis), ~replace_na(., max(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(std_rank), ~replace_na(., 0) ) %>%
+        mutate_at( vars(ImpScore_shapley_wt), ~replace_na(., min(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_shapley_eq), ~replace_na(., min(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_lomo_wt), ~replace_na(., min(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_lomo_eq), ~replace_na(., min(., na.rm=TRUE)) ) %>%
+        ungroup()
+
+saveRDS(df_all_scores_extended_NAworst, "../Data/df_all_scores_extended_NAworst.rds")
+```
+
+
+# 2. Replace NAs with the average score
+
+For each model, location (l), time (t), horizon (h), replace NAs 
+
+- WIS : by mean WIS over all non-NA models
+
+- Rank : with 0.5
+
+- Importance: by mean importance over all non-NA models
+
+
+```{r}
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
+
+df_all_scores_extended_NAavg <- df_all_scores_extended %>% #select(-model) %>%
+        dplyr::group_by(horizon, forecast_date, location) %>%
+        mutate_at( vars(wis), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(std_rank), ~replace_na(., 0.5) ) %>%
+        mutate_at( vars(ImpScore_shapley_wt), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_shapley_eq), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_lomo_wt), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
+        mutate_at( vars(ImpScore_lomo_eq), ~replace_na(., mean(., na.rm=TRUE)) ) %>%
+        ungroup()
+
+saveRDS(df_all_scores_extended_NAavg, "../Data/df_all_scores_extended_NAavg.rds")
+```
+
+
+# 3. Drop NAs
+
+Drop all NAs
+
+```{r}
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
+
+df_all_scores_extended_NAdrop <- df_all_scores_extended %>% drop_na()
+saveRDS(df_all_scores_extended_NAdrop, "../Data/df_all_scores_extended_NAdrop.rds")
+```
+
+

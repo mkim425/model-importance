@@ -1,0 +1,253 @@
+---
+title: "Supplement"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+suppressPackageStartupMessages(library(tidyverse))
+library(dplyr)
+library(magrittr)
+library(lubridate)
+library(pander)
+library(ggpubr) # ggarrange
+library(GGally) 
+suppressPackageStartupMessages(library(GGally)) # for 'ggpairs'
+library(here)
+setwd(here())
+```
+
+```{r}
+source("../Rcode/relative_wis.R") 
+```
+
+# Replace NAs with the average score
+
+For each model, location (l), time (t), horizon (h), replace NAs by the average score; by mean WIS over all non-NA models for WIS, by 0.5 for rank, by mean importance over all non-NA models.
+
+```{r NAavg-table}
+df_all_scores_extended_NAavg <- readRDS("../Data/df_all_scores_extended_NAavg.rds")
+
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAavg)
+
+compare_NAavg <- df_all_scores_extended_NAavg %>% 
+        group_by(model) %>% 
+        summarise(meanWIS = mean(wis),
+                  meanRank = mean(std_rank),
+                  meanImpScore_shapley_eq = mean(ImpScore_shapley_eq),
+                  meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
+                  meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
+                  meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
+        ungroup() %>% 
+        left_join(relWIS, by="model") %>% 
+        mutate(model = reorder(factor(model), meanWIS)) %>%
+        arrange(meanWIS) %>% 
+        relocate(relWIS, .after = meanWIS) %>% 
+        mutate_if(is.numeric, ~round(., 2))
+
+compare_NAavg %>% 
+        rename(WIS=meanWIS, 
+               Rank=meanRank, 
+               Shapley.eq = meanImpScore_shapley_eq,
+               Shapley.wt = meanImpScore_shapley_wt,
+               LOMO.eq = meanImpScore_lomo_eq,
+               LOMO.wt = meanImpScore_lomo_wt) %>% 
+        pander(caption = "Summary of mean WIS, rank, importance scores 
+               with untrained and trained ensembles 
+               by replaceing NA values with the mean of the corresponding metric.",
+               justify = "right", 
+               split.table = Inf)
+
+```
+
+
+```{r NAavg-plot}
+g1 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanWIS), color = "deeppink") 
+g2 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanRank), color = "green2") +
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(x=NULL)
+g3 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_eq), color = "red") +
+        labs(y="Shapley.eq") 
+g4 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_eq), color = "blue") +
+        labs(y="LOMO.eq") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+g5 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_wt), color = "red2") +
+        labs(y="Shapley.wt") 
+g6 <- compare_NAavg %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_wt), color = "blue2") +
+        labs(y="LOMO.wt") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+
+remove_x <- theme(
+  axis.text.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.x = element_blank()
+)
+
+plots_wis_rk <- ggarrange(g1 + remove_x, g2,ncol = 1, heights = c(0.65, 1))  
+annotate_figure(plots_wis_rk, top = text_grob("mean WIS and mean Rank", 
+               face = "bold", size = 14))
+
+plots_untrained <- ggarrange(g3 + remove_x, g4,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_untrained, top = text_grob("mean Importance Score (untrained) ", 
+               face = "bold", size = 14))
+
+plots_trained <- ggarrange(g5 + remove_x, g6,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) ", 
+               face = "bold", size = 14))
+```
+
+
+```{r pairs-plot-NAavg, message=FALSE}
+d_NAavg <- compare_NAavg %>% 
+        mutate(neg_WIS=-meanWIS) %>% 
+        relocate(neg_WIS, .after=model) 
+
+colnames <- c(paste0("-WIS"), paste0("Rank"), 
+              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
+              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+
+p.pairs.NAavg <- ggpairs(
+  d_NAavg %>% select(c(2,5:9)),
+  columnLabels = colnames,
+  labeller = "label_parsed"
+)
+
+p.pairs.NAavg 
+
+pdf(file="../Plot/plot-corr-NAavg.pdf",
+    width = 10,
+    height = 5)
+p.pairs.NAavg
+dev.off()
+```
+
+# Drop NAs
+
+Drop all NAs
+
+```{r NAdrop-table}
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
+df_all_scores_extended_NAdrop <- df_all_scores_extended %>% drop_na()
+
+# compute relative wis compared to the "COVIDhub-baseline" model
+relWIS <- relative_wis(df_all_scores_extended_NAdrop)
+
+compare_NAdrop <- df_all_scores_extended_NAdrop %>% 
+        group_by(model) %>% 
+        summarise(meanWIS = mean(wis),
+                  meanRank = mean(std_rank),
+                  meanImpScore_shapley_eq = mean(ImpScore_shapley_eq),
+                  meanImpScore_shapley_wt = mean(ImpScore_shapley_wt),
+                  meanImpScore_lomo_eq = mean(ImpScore_lomo_eq),
+                  meanImpScore_lomo_wt = mean(ImpScore_lomo_wt)) %>% 
+        ungroup() %>% 
+        left_join(relWIS, by="model") %>%
+        mutate(model = reorder(factor(model), meanWIS)) %>%
+        arrange(meanWIS) %>% 
+        relocate(relWIS, .after = meanWIS) %>% 
+        mutate_if(is.numeric, ~round(., 2))
+
+compare_NAdrop %>% 
+        rename(WIS=meanWIS, 
+               Rank=meanRank, 
+               Shapley.eq = meanImpScore_shapley_eq,
+               Shapley.wt = meanImpScore_shapley_wt,
+               LOMO.eq = meanImpScore_lomo_eq,
+               LOMO.wt = meanImpScore_lomo_wt) %>% 
+        pander(caption = "Summary of mean WIS, rank, importance scores with 
+               untrained and trained ensembles by dropping NA values.",
+               justify = "right", 
+               split.table = Inf)
+```
+
+```{r NAdrop-plot}
+g1 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanWIS), color = "deeppink") 
+g2 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanRank), color = "green2") +
+        scale_x_discrete(guide = guide_axis(angle = 30)) +
+        labs(x=NULL)
+g3 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_eq), color = "red") +
+        labs(y="Shapley.eq") 
+g4 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_eq), color = "blue") +
+        labs(y="LOMO.eq") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+g5 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_shapley_wt), color = "red2") +
+        labs(y="Shapley.wt") 
+g6 <- compare_NAdrop %>% ggplot() + 
+        geom_point(aes(model, meanImpScore_lomo_wt), color = "blue2") +
+        labs(y="LOMO.wt") +
+        scale_x_discrete(guide = guide_axis(angle = 30))
+
+
+remove_x <- theme(
+  axis.text.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.x = element_blank()
+)
+
+plots_wis_rk <- ggarrange(g1 + remove_x, g2,ncol = 1, heights = c(0.65, 1))  
+annotate_figure(plots_wis_rk, top = text_grob("mean WIS and mean Rank", 
+               face = "bold", size = 14))
+
+plots_untrained <- ggarrange(g3 + remove_x, g4,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_untrained, top = text_grob("mean Importance Score (untrained) ", 
+               face = "bold", size = 14))
+
+plots_trained <- ggarrange(g5 + remove_x, g6,ncol = 1, heights = c(0.65, 1)) 
+annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) ", 
+               face = "bold", size = 14))
+```
+
+```{r pairs-plot-NAdrop, message=FALSE}
+d_NAdrop <- compare_NAdrop %>% 
+        mutate(neg_WIS=-meanWIS) %>% 
+        relocate(neg_WIS, .after=model) 
+
+colnames <- c(paste0("-WIS"), paste0("Rank"), 
+              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
+              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+
+p.pairs.NAdrop <- ggpairs(
+  d_NAdrop %>% select(c(2,5:9)),
+  columnLabels = colnames,
+  labeller = "label_parsed"
+)
+
+p.pairs.NAdrop 
+
+pdf(file="../Plot/plot-corr-NAdrop.pdf",
+    width = 10,
+    height = 5)
+p.pairs.NAdrop
+dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
