@@ -57,11 +57,6 @@ truth.ma.2021 <- read_csv("../Data/truth_MA_2021.csv") %>%
 
 y.val= truth.ma.2021$truth[truth.ma.2021$target_end_date == "2021-12-25"] 
 
-# generate break positions
-breaks = c(seq(0, 1600, by=400), y.val)
-# and labels
-labels = as.character(breaks)
-
 # lock in factor level order
 forecast_ma2021_full.v2 <- forecast_ma2021_full %>% 
   mutate(model_order = factor(model, levels = unique(model))) %>% 
@@ -84,7 +79,6 @@ p1 <- d[c(1:9), ] %>%
         ggplot(aes(y = model_order, color = model_order)) + 
         geom_dumbbell(aes(x = X0.01, xend = X0.99)) +
         geom_point(aes(x = X0.5 ) ) + 
-        scale_x_continuous(limits = c(-10, 1600), breaks = breaks, labels = labels) +
         scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
         geom_vline(xintercept = y.val, linetype="dashed", 
                       size=0.5, colour="darkred") +
@@ -103,7 +97,7 @@ p1 <- d[c(1:9), ] %>%
 d2.copy <- d2 %>% mutate(model_rename = model_order) %>% relocate(model_rename)
 d2.copy$model_rename <- str_remove(d2.copy$model_rename, pattern = "Ens.wo.")
 model_level <- d2.copy$model_rename[c(2:10, 1)]
-breaks2 <- c(seq(0, 700, by=150), y.val)
+breaks2 <- c(seq(0, 700, by=100))
 labels2 <- as.character(breaks2)
 
 p2 <- d2.copy %>%
