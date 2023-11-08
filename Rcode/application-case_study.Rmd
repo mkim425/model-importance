@@ -71,7 +71,7 @@ d2 <- d[c(10:19), ]
 
 
 col_vector<-c('#e6194b', '#3cb44b', '#000000', '#4363d8', 
-              '#f58231', '#911eb4', '#a9a9a9', '#42d4f4', '#f032e6', '#ffe119')
+              '#a9a9a9', '#911eb4', '#f58231', '#42d4f4', '#f032e6', '#ffe119')
 
 
 # Prediction intervals of single models
