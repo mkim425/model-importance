@@ -161,21 +161,18 @@ That bias, in this situation, therefore made this model an “important” count
 ```{r}
 require("ggrepel")
 
-temp.dat <- forecast_ma2021 %>%
-  filter(!grepl('Ens', model)) %>% 
-  filter(target_end_date == "2021-12-25")
-
-p.imp_wis.1225 <- temp.dat %>% 
-  ggplot(aes(x=wis, y = importance)) + 
-  geom_point() + 
-  geom_text_repel(aes(label = model), 
-    size= 3.7, colour="red", 
-    box.padding = unit(0.2, "lines"),
-    point.padding = unit(0.3, "lines")) +
- xlim(0,130) + 
-  labs(y = "Importance",
-       x = "WIS") + 
-  theme(legend.position = "none")
+p.imp_wis.1225 <- forecast_ma2021_full.v2 %>%
+        filter(target_end_date == "2021-12-25") %>%
+        filter(!grepl('Ens', model)) %>% 
+        ggplot(aes(x=wis, y = importance, color=model_order)) + 
+        geom_point(size = 2.5) + 
+        scale_color_manual(values=col_vector) +
+        xlim(0,130) + 
+        labs(y = "Importance",
+             x = "WIS") + 
+        theme(axis.text=element_text(size=12),
+              axis.title=element_text(face = "bold"),
+              legend.position="none")
 
 
 pdf(file="../Plot/plot-wis_imp_20211225.pdf",
