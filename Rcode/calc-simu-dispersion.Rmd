@@ -1,0 +1,70 @@
+---
+title: "dispersion calculation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+```
+
+Variance of ensembles:
+$$E^{All}: \frac{1}{9}(0.5^2+0.7^2+s^2)$$
+$$E^{-F_1}: \frac{1}{4}(0.7^2+s^2)$$
+$$E^{-F_2}: \frac{1}{4}(0.5^2+s^2)$$
+$$E^{-F_3}: \frac{1}{4}(0.5^2+0.7^2)=0.185$$
+
+
+```{r}
+s = seq(0.1, 3, by =0.05)
+E_All = (0.5^2+0.7^2+s^2)/9
+E_wo_F1 = (0.7^2+s^2)/4
+E_wo_F2 = (0.5^2+s^2)/4
+E_wo_F3 = (0.5^2+0.7^2)/4
+
+dispersion <- data.frame(s=s, 
+                         E_ALL=round(E_All,4), 
+                         E_wo_F1=round(E_wo_F1,4), 
+                         E_wo_F2=round(E_wo_F2,4), 
+                         E_wo_F3=round(E_wo_F3,4) )
+
+p <- dispersion %>% 
+        pivot_longer(cols=2:5, names_to = "Ensemble") %>% 
+        ggplot(aes(s, value, group=Ensemble)) +
+        geom_hline(yintercept = 1, color = "maroon", alpha=.5) +
+        # geom_vline(xintercept = c(0.35,0.5,0.7, 1.3, 2.4), linetype="dotted", color = "blue") +
+        # scale_x_continuous(breaks=c(0:3,0.35, 0.5,0.7, 1.3, 2.4)) + 
+        geom_vline(xintercept = c(0.5,0.7, 1, 2.4), color = "gray", alpha=.5) +
+        geom_line(aes(linetype=Ensemble)) +         
+        scale_linetype_manual("Ensemble\n forecast", values=c("solid", "dotted","dashed","twodash"),
+                              labels = c(bquote(E^'A'),bquote(E^'-1'),bquote(E^'-2'),bquote(E^'-3'))) +
+        scale_x_continuous(breaks=c(0:3,0.5,0.7, 1, 2.4)) + 
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+        labs(y="variance") +
+        theme(text = element_text(size=14))
+
+p 
+```
+
+
+```{r}
+dispersion %>% filter(E_All>E_wo_F3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
