@@ -29,6 +29,7 @@ library(pander)
 library(kableExtra)
 library(ggprism)
 library(patchwork)
+library(stringr)
 # get_all_models()
 # datatable(fdat)
 library(here)
@@ -57,11 +58,6 @@ truth.ma.2021 <- read_csv("../Data/truth_MA_2021.csv") %>%
 
 y.val= truth.ma.2021$truth[truth.ma.2021$target_end_date == "2021-12-25"] 
 
-# generate break positions
-breaks = c(seq(0, 1600, by=400), y.val)
-# and labels
-labels = as.character(breaks)
-
 # lock in factor level order
 forecast_ma2021_full.v2 <- forecast_ma2021_full %>% 
   mutate(model_order = factor(model, levels = unique(model))) %>% 
@@ -75,25 +71,19 @@ d1 <- d[c(10, 1:9), ]
 d2 <- d[c(10:19), ]
 
 
-col_vector<-c('#e6194b', '#3cb44b', '#000000', '#4363d8', 
-              '#f58231', '#911eb4', '#a9a9a9', '#42d4f4', '#f032e6', '#ffe119')
-
-
 # Prediction intervals of single models
 p1 <- d[c(1:9), ] %>% 
-        ggplot(aes(y = model_order, color = model_order)) + 
-        geom_dumbbell(aes(x = X0.01, xend = X0.99)) +
+        ggplot(aes(y = model_order)) + 
+        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
         geom_point(aes(x = X0.5 ) ) + 
-        scale_x_continuous(limits = c(-10, 1600), breaks = breaks, labels = labels) +
         scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
         geom_vline(xintercept = y.val, linetype="dashed", 
                       size=0.5, colour="darkred") +
-        labs(x="Value", y="Model", title="Prediction Intervals of Individual Forecasts") + 
-        theme(axis.text.x = element_blank(),
+        labs(x="Value", y="Model", title="95% Prediction Intervals of Individual Forecasts") + 
+        theme(axis.text.x = element_text(size=8, angle = 30, hjust = 1),
               legend.position = "none") +
-        scale_color_manual(values=col_vector) +
         theme(axis.title.x = element_blank(),
-              axis.text.x = element_blank(),
+              axis.text.x = element_text(size = 10),
               axis.title.y = element_text(size = 16)) +
         theme(text = element_text(size = 12)) + coord_flip() 
 
@@ -103,56 +93,36 @@ p1 <- d[c(1:9), ] %>%
 d2.copy <- d2 %>% mutate(model_rename = model_order) %>% relocate(model_rename)
 d2.copy$model_rename <- str_remove(d2.copy$model_rename, pattern = "Ens.wo.")
 model_level <- d2.copy$model_rename[c(2:10, 1)]
-breaks2 <- c(seq(0, 700, by=150), y.val)
+breaks2 <- c(seq(0, 700, by=100))
 labels2 <- as.character(breaks2)
 
 p2 <- d2.copy %>%
         mutate(name = factor(model_rename, levels=model_level)) %>% 
         relocate(name) %>% 
-        ggplot(aes(y = name, color = name)) + 
-        geom_dumbbell(aes(x = X0.01, xend = X0.99)) +
+        ggplot(aes(y = name)) + 
+        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
         geom_point(aes(x = X0.5 ) ) +
-        scale_x_continuous(limits = c(-10, 600), breaks = breaks2, labels = labels2) +
+        scale_x_continuous(limits = c(-10, 500), breaks = breaks2, labels = labels2) +
         scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
         geom_vline(xintercept = y.val, linetype="dashed", 
                       size=0.5, colour="darkred") +
-        labs(x="Value", y="Model", title="Prediction Intervals of Ensembles Built Excluding a Single Model") + 
+        labs(x="Value", y="Model", title="95% Prediction Intervals of Ensembles Built Excluding a Single Model") + 
         theme(axis.text.x = element_text(size=8, angle = 30, hjust = 1),
               legend.position = "none") +
-        scale_color_manual(values=col_vector) +
         theme(axis.title.x = element_text(size = 16),
               axis.text.x = element_text(size = 10)) +
-        theme(text = element_text(size = 12))  + coord_flip()   
-
-
-p3 <- d2.copy %>%
-        mutate(name = factor(model_rename, levels=model_level)) %>% 
-        relocate(name) %>% 
-        ggplot(aes(y = name, color = name)) + 
-        geom_dumbbell(aes(x = X0.01, xend = X0.99)) +
-        geom_point(aes(x = X0.5 ) ) +
-        scale_x_continuous(limits = c(-10, 600), breaks = breaks2, labels = labels2) +
-        scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
-        geom_vline(xintercept = y.val, linetype="dashed", 
-                      size=0.5, colour="darkred") +
-        labs(x="Value", y="Model", title="Prediction Intervals of Ensembles Built Excluding a Single Model") + 
-        theme(axis.text.x = element_text(size=8, angle = 90, hjust = 1, vjust=0.5),
-              legend.position = "none") +
-        scale_color_manual(values=col_vector) +
-        theme(axis.title.x = element_blank(),
-              axis.text.x = element_blank()) +
         theme(text = element_text(size = 12))  + coord_flip()   
 ```
 
 ```{r}
-pdf(file="../Plot/PI1.pdf",
+pdf(file="../Plot/95PI1.pdf",
     width = 6,
     height = 3)
 p1
 dev.off()
 ```
 ```{r}
-pdf(file="../Plot/PI2.pdf",
+pdf(file="../Plot/95PI2.pdf",
     width = 8,
     height = 4)
 p2
@@ -167,21 +137,18 @@ That bias, in this situation, therefore made this model an “important” count
 ```{r}
 require("ggrepel")
 
-temp.dat <- forecast_ma2021 %>%
-  filter(!grepl('Ens', model)) %>% 
-  filter(target_end_date == "2021-12-25")
-
-p.imp_wis.1225 <- temp.dat %>% 
-  ggplot(aes(x=wis, y = importance)) + 
-  geom_point() + 
-  geom_text_repel(aes(label = model), 
-    size= 3.7, colour="red", 
-    box.padding = unit(0.2, "lines"),
-    point.padding = unit(0.3, "lines")) +
- xlim(0,130) + 
-  labs(y = "Importance",
-       x = "WIS") + 
-  theme(legend.position = "none")
+p.imp_wis.1225 <- forecast_ma2021_full.v2 %>%
+        filter(target_end_date == "2021-12-25") %>%
+        filter(!grepl('Ens', model)) %>% 
+        ggplot(aes(x=wis, y = importance, color=model_order)) + 
+        geom_point(size = 2.5) + 
+        scale_color_manual(values=col_vector) +
+        xlim(0,130) + 
+        labs(y = "Importance",
+             x = "WIS") + 
+        theme(axis.text=element_text(size=12),
+              axis.title=element_text(face = "bold"),
+              legend.position="none")
 
 
 pdf(file="../Plot/plot-wis_imp_20211225.pdf",
