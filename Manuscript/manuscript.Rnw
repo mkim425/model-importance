@@ -1,0 +1,208 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\captionsetup[subfigure]{font={bf,small}, skip=1pt, margin=-0.7cm, singlelinecheck=false}
+\usepackage{bbm}
+\usepackage{comment} 
+\usepackage{cite}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{listings}
+\usepackage{algcompatible}
+% OR \usepackage{algorithmic}
+\usepackage{algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\usepackage{booktabs}
+\newcommand{\bftab}{\fontseries{b}\selectfont}
+\newcommand{\code}{\texttt}
+\theoremstyle{definition}
+\newtheorem*{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+\title{Beyond forecast leaderboards: Measuring individual model importance based on contribution to probabilistic ensemble accuracy}
+\author{Minsu Kim, Evan L. Ray, Nicholas G. Reich}
+\date{}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+<<setup, echo=FALSE>>=
+library(knitr)
+# evaluate fig.cap after a chunk is evaluated
+opts_knit$set(eval.after = 'fig.cap')
+library(ggplot2)
+library(tidyverse)
+library(ggrepel)
+theme_set(theme_bw())
+@
+
+
+\begin{abstract}
+Ensemble forecasting is generally recognized for its ability to outperform individual standalone models in infectious disease forecasting and is therefore considered a robust option for public health decision making and policy planning. The US COVID-19 Forecast Hub has produced a probabilistic ensemble forecast model of COVID-19 cases, hospitalizations, and deaths in the United States based on forecasts from individual models developed by more than 90 different research groups. As the Forecast Hub served as the official short-term forecast of the US Centers for Disease Control and Prevention, it is important to understand the relative importance and contributions of individual models to creating a highly accurate forecast combination. 
+In this work, we propose two practical methods for evaluating the contribution of individual component models. 
+One method uses a leave-one-model-out algorithm when building an ensemble and the other, based on the Shapley value in game theory, considers ensemble models constructed from all possible subsets of individual models. 
+We aim to identify and evaluate methods for measuring the contributions of individual component models to ensemble accuracy. We explore how these metrics are related to the weighted interval score (WIS), a commonly used proper scoring rule for quantile forecasts, and illustrate how these methods provide distinct perspectives when evaluating how much value a component model adds to a probabilistic ensemble model in the presence of other models. Our results show that the most accurate model according to WIS does not always add the most value to the ensemble. This indicates that our proposed methods can be used to capture the contribution of individual models to a more accurate ensemble model, which is difficult to ascertain from standard accuracy metrics alone. This study offers valuable insights into understanding individual forecasting models’ unique features and their roles in contributing to an ensemble model for a specific prediction task.
+    
+\end{abstract}
+
+\section{Introduction}
+
+\begin{figure}[b!]
+\centering
+
+<<fig1.motivation-example, fig=TRUE, echo=FALSE>>==
+# Truth data
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
+  select(target_end_date, value) 
+truth.ma.2021$target_end_date <- as.Date(truth.ma.2021$target_end_date)
+
+# all forecasts for MA, 2021
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv") 
+forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)        
+
+# extract data for only 3 models
+forcasts_3mod <- forecasts_MA_2021 %>% 
+        filter(model %in% c("CovidAnalytics-DELPHI", "Karlen-pypm", "UMass-MechBayes"),
+               #horizon == 4,
+               forecast_date %in% c("2021-11-28", "2021-11-29")) %>% 
+        select(model, horizon, target_end_date, quantile, value) %>% 
+        filter(quantile %in% c(0.025, 0.5, 0.975)) %>% 
+        pivot_wider(names_from = quantile, values_from = value) %>% 
+        rename(lower = '0.025', upper = '0.975', value = '0.5')
+
+ggplot(forcasts_3mod, aes(x = target_end_date)) +
+        facet_grid(~model) +
+        geom_point(aes(y = value, color = "medians"), size=2) +
+        geom_line(aes(y = value, color = "medians"), linewidth=1) +
+        geom_ribbon(data=forcasts_3mod, 
+                    aes(ymin = lower, ymax = upper, 
+                    fill = "#3388FF"),
+                    alpha = 0.5) +
+        geom_point(data = truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"),
+                   aes(y= value, group=1, color = "obs")) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"), 
+                  aes(y= value, group=1, color = "obs")) +
+        geom_point(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  shape=1, alpha = 1) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  alpha = 0.75) +
+        coord_cartesian(ylim = c(0, 500)) +
+        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
+        labs(y = "Weekly Deaths",
+             # title = "Forecasts of incident deaths in Massachusetts on November 28, 2021", 
+             x="Date")  +
+        scale_color_manual(name = "", 
+                           values = c("medians"="DodgerBlue", 
+                                      "obs"="Black", 
+                                      "truth"="Black"), 
+                           labels = c("Forecast (Predictive median)", 
+                                      "Observed data before forecasting", 
+                                      "Eventually observed value")) + 
+        scale_fill_manual("", values="#3388FF", 
+                          labels = "95% Prediction interval") +
+        theme(axis.text.x = element_text(size=8, angle=90),
+              legend.title = element_blank(),
+              legend.text = element_text(size=10),
+              legend.position = "bottom", 
+              legend.direction = "vertical", 
+              legend.box = "horizontal")
+
+@
+
+\caption{Forecasts of COVID-19 incident deaths at 1- through 4-week horizons in Massachusetts made on November 27, 2021 by three models. Black dots show historical data available as of November 28. Blue dots indicate predictive medians and the shaded bands represent 95\% prediction intervals. The open black circles are observations not available when the forecast was made. The 95\% prediction intervals of the UMass-MechBayes model (truncated here for better visibility of the observed data) extend up to 671 and 1110 for the 3-week and 4-week ahead horizons, respectively. }
+\label{fig:forecasts-example}
+\end{figure}
+
+\newpage
+\section{Methods}\label{sec:methods}
+
+\newpage
+\section{Results}\label{sec:result}
+
+\subsection{Application of the model importance metrics to forecast data from the US COVID-19 Forecast Hub}\label{subsec:application}
+
+\subsubsection{Case study: Relationship between importance score and WIS with data for deaths in Massachusetts in 2021}
+
+\begin{figure}[b!]
+\centering
+<<fig2.importance-vs-wis-by-model, fig=TRUE, echo=FALSE>>==
+forecast_ma2021 <- readRDS("../Data/forecast_death_ma2021.rds") %>% 
+  dplyr::select(model, importance, wis, target_end_date, location) 
+dat <- forecast_ma2021 %>% 
+  dplyr::filter(!grepl('Ens', model)) %>% 
+  dplyr::mutate(target_end_date=str_remove(target_end_date, "2021-")) 
+p <- dat %>% 
+        ggplot(aes(x=wis, y= importance)) +
+        geom_point() +
+        geom_point(data = dat %>% dplyr::filter(target_end_date == "12-25"), 
+                   color ="red") +
+        facet_wrap(~ model) +
+        labs(#title = "Model importance vs. WIS by Model",
+                x = "WIS",
+                y = "Importance") + 
+        theme(axis.text=element_text(size=10),
+              axis.title=element_text(size=16),
+              legend.position = "none")
+p
+
+@
+
+\caption{Model importance versus WIS by model for all weeks in 2021. Each point represents a pair of WIS and importance score evaluated at a certain week, and each panel contains 52 points accordingly. Red dots represent WIS and importance score pairs evaluated on December 25, 2021. The importance of an individual model as an ensemble member tends to be inversely correlated with that model's overall prediction accuracy.}
+\label{fig:scatterplot-wis_imp2021}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+	\includegraphics[scale=0.55]{95PIs.pdf}
+		\label{fig:PIs2021}
+\end{subfigure}\par
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+<<fig3-2.wis_imp20211225, fig=TRUE, echo=FALSE>>==
+dat <- forecast_ma2021 %>% 
+        filter(!grepl('Ens', model)) %>% 
+        filter(target_end_date == "2021-12-25")
+p.imp_wis.1225 <- dat %>% 
+        ggplot(aes(x=wis, y = importance)) + 
+        geom_point(size = 3, color = "red") + 
+        geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
+                         aes(label = model),
+                        size = 5,
+                         nudge_x = -32,
+                         nudge_y = -2,
+                         box.padding = 0.5,
+                         point.padding = 0.5,
+                         arrow = arrow(length = unit(0.03, "npc"))) + 
+        xlim(0,130) + 
+        labs(y = "Importance",
+             x = "WIS") + 
+        theme(axis.text=element_text(size=14),
+              axis.title=element_text(size=16),
+              legend.position="none")
+p.imp_wis.1225
+@
+
+\label{fig:plot-wis_imp20211225}
+\end{subfigure}
+\caption{(\subref{fig:PIs2021}) 95\% Prediction intervals (PIs) of individual forecasts (top) and ensemble forecasts built excluding a single model (bottom) on target end date 2021-12-25. For example, the lines on the far left indicate PI for the CovidAnalytics-DELPHI model on the top panel and PI for the ensemble created without the CovidAnalytics-DELPHI model on the bottom panel. Ensemble.ALL represents an ensemble model built on all nine individual models. In each PI, the  end points indicate 0.025 and 0.975 quantiles and the mid-point represents the 0.5 quantile (predictive median). The horizontal dashed lines represent the eventual observation. The ensemble without CovidAnalytics-DELPHI is the only ensemble model with a point estimate below 150. The ensemble without UMass-MechBayes has the lowest dispersion
+among the ensemble models. (\subref{fig:plot-wis_imp20211225}) Model importance of each model versus WIS on target end date 2021-12-25. CovidAnalytics-DELPHI is the most important and also the least accurate by WIS.}
+\label{fig:20211225}
+\end{figure}
+
+
+
+
+\end{document}
