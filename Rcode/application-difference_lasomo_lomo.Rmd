@@ -49,14 +49,17 @@ source("../Rcode/relative_wis.R")
 # Submission Proportion
 
 ```{r submission-proportion-wis, include=FALSE}
-# df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
-# df_all_scores_extended %>% 
-#         group_by(model) %>% 
-#         summarise(na_prop = sum(is.na(wis))/21800,
-#                   submission_proportion = sum(!is.na(wis))/21800,
-#                   submission_count = sum(!is.na(wis))) %>% 
-#         ungroup() %>% 
-#         arrange(desc(submission_proportion))
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
+props <- df_all_scores_extended %>%
+        group_by(model) %>%
+        summarise(#na_prop = sum(is.na(wis))/21800,
+                  submission_proportion = round(sum(!is.na(wis))/21800 * 100, 1),
+                  submission_count = sum(!is.na(wis))) %>%
+        ungroup() %>%
+        arrange(desc(submission_proportion)) %>% 
+        rename(Model = model,
+                 "Submission rate (%)" = submission_proportion,
+                 "Number of predictions (total:21800)" = submission_count)
 ```
 
 
@@ -65,7 +68,7 @@ source("../Rcode/relative_wis.R")
 For each model, location (l), time (t), horizon (h), replace NAs by the worst scores; 
 by max WIS over all non-NA models for WIS, by 0 for rank, and by min importance scores over all non-NA models.
 
-```{r table}
+```{r table, include=FALSE}
 df_all_scores_extended_NAworst <- readRDS("../Data/df_all_scores_extended_NAworst.rds") 
 
 # compute relative wis compared to the "COVIDhub-baseline" model
@@ -85,6 +88,7 @@ compare_NAworst <- df_all_scores_extended_NAworst %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
+saveRDS(compare_NAworst, "../Data/compare_NAworst.rds")
 
 compare_NAworst %>% 
         rename(WIS=meanWIS, 
@@ -98,6 +102,26 @@ compare_NAworst %>%
                by replaceing NA values with the worst score.",
                justify = "right", 
                split.table = Inf)
+
+tab <- compare_NAworst %>% 
+        rename(WIS=meanWIS, 
+               Rank=meanRank, 
+               Shapley.eq = meanImpScore_shapley_eq,
+               Shapley.wt = meanImpScore_shapley_wt,
+               LOMO.eq = meanImpScore_lomo_eq,
+               LOMO.wt = meanImpScore_lomo_wt) 
+colnames(tab2)<-c(
+        "Model"," WIS", "relWIS", "Rank",
+        "$\\Phi^{\\text{lasomo}}_{\\text{eq}}$", 
+        "$\\Phi^{\\text{lasomo}}_{\\text{wt}}$", 
+        "$\\Phi^{\\text{lomo}}_{\\text{eq}}$", 
+        "$\\Phi^{\\text{lomo}}_{\\text{wt}}$"
+                  )
+xtab2 <- xtable(tab2, digits=c(0,0,1,rep(2,6)), 
+       caption = "Summary of WIS, relative WIS compared to the COVIDhub-baseline, standardized rank score, importance scores ($\\Phi$), sorted by mean WIS. All scores were averaged across all forecast dates, locations, and horizons. In the importance score notation ($\\Phi$), the superscript indicates the algorithm method, and the subscript indicates the ensemble method used. For example, $\\Phi^{\\text{lomo}}_{\\text{wt}}$ represents the mean important score based on leave one model out algorithm with weighted (trained) ensemble and $\\Phi^{\\text{lasomo}}_{\\text{eq}}$ represents the mean important score based on leave all subsets of models out algorithm with equally weighted (untrained) ensemble.  The best value in each column is highlighted in bold.", 
+       align="|r|rrrrrrrr|")
+print(xtab2, scalebox = 0.8, include.rownames=FALSE, sanitize.text.function=function(x) {x})
+
 ```
 
 
@@ -150,6 +174,7 @@ annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) 
 # Summary of relationships between metrics 
 
 ```{r pairs-plot-NAworst, message=FALSE}
+compare_NAworst <- readRDS("../Data/compare_NAworst.rds")
 d_NAworst <- compare_NAworst %>% 
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
