@@ -42,6 +42,7 @@
 
 <<setup, echo=FALSE>>=
 library(knitr)
+library(kableExtra)
 library(xtable)
 # evaluate fig.cap after a chunk is evaluated
 opts_knit$set(eval.after = 'fig.cap')
@@ -66,7 +67,7 @@ We aim to identify and evaluate methods for measuring the contributions of indiv
 \begin{figure}[b!]
 \centering
 
-<<fig1.motivation-example, fig=TRUE, echo=FALSE>>==
+<<fig1.motivation-example, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
 # Truth data
 truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
   select(target_end_date, value) 
@@ -143,7 +144,7 @@ ggplot(forcasts_3mod, aes(x = target_end_date)) +
 
 \begin{figure}[b!]
 \centering
-<<fig2.importance-vs-wis-by-model, fig=TRUE, echo=FALSE>>==
+<<fig2.importance-vs-wis-by-model, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
 forecast_ma2021 <- readRDS("../Data/forecast_death_ma2021.rds") %>% 
   dplyr::select(model, importance, wis, target_end_date, location) 
 dat <- forecast_ma2021 %>% 
@@ -174,7 +175,7 @@ p
 \centering
 \begin{subfigure}{\textwidth}
 	\subcaption{}
-	\includegraphics[scale=0.55]{95PIs.pdf}
+	\includegraphics[scale=0.55]{manuscript-fig3-1.95PIs.pdf}
 		\label{fig:PIs2021}
 \end{subfigure}\par
 \begin{subfigure}{\textwidth}
@@ -237,7 +238,7 @@ print(xtab1, include.rownames=FALSE)
 
 \begin{figure}[h!]
 \centering
-<<fig4.corr-NAworst, fig=TRUE, echo=FALSE>>==
+<<fig4.corr-NAworst, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
 compare_NAworst <- readRDS("../Data/compare_NAworst.rds")
 d_NAworst <- compare_NAworst %>% 
         mutate(neg_WIS=-meanWIS) %>% 
@@ -251,7 +252,7 @@ p.pairs <- ggpairs(
   d_NAworst %>% select(c(2,5:9)),
   columnLabels = colnames,
   labeller = "label_parsed"
-)
+) + theme(axis.text.x=element_text(angle = 90, vjust = -0.01))
 
 p.pairs 
 @
@@ -263,12 +264,12 @@ p.pairs
 
 <<tab2.score-compare-NAworst, echo=FALSE, results = tex>>==
 tab2 <- compare_NAworst %>% 
-        rename(WIS=meanWIS, 
-               Rank=meanRank, 
+        rename(WIS=meanWIS,
+               Rank=meanRank,
                Shapley.eq = meanImpScore_shapley_eq,
                Shapley.wt = meanImpScore_shapley_wt,
                LOMO.eq = meanImpScore_lomo_eq,
-               LOMO.wt = meanImpScore_lomo_wt) 
+               LOMO.wt = meanImpScore_lomo_wt)  
 colnames(tab2)<-c(
         "Model"," WIS", "relWIS", "Rank",
         "$\\Phi^{\\text{lasomo}}_{\\text{eq}}$", 
@@ -276,21 +277,72 @@ colnames(tab2)<-c(
         "$\\Phi^{\\text{lomo}}_{\\text{eq}}$", 
         "$\\Phi^{\\text{lomo}}_{\\text{wt}}$"
                   )
+
 xtab2 <- xtable(tab2, digits = c(0,0,1,rep(2,6)), 
        caption = "Summary of WIS, relative WIS compared to the COVIDhub-baseline, standardized rank score, importance scores ($\\Phi$), sorted by mean WIS. All scores were averaged across all forecast dates, locations, and horizons. In the importance score notation ($\\Phi$), the superscript indicates the algorithm method, and the subscript indicates the ensemble method used. For example, $\\Phi^{\\text{lomo}}_{\\text{wt}}$ represents the mean important score based on leave one model out algorithm with weighted (trained) ensemble and $\\Phi^{\\text{lasomo}}_{\\text{eq}}$ represents the mean important score based on leave all subsets of models out algorithm with equally weighted (untrained) ensemble.  The best value in each column is highlighted in bold.", 
-       align="|r|rrrrrrrr|")
-print(xtab2, scalebox=0.5, include.rownames=FALSE, sanitize.text.function=function(x) {x})
+       align="|r|rccccccc|")
+
+print(xtab2, include.rownames=FALSE, 
+      sanitize.colnames.function=function(x) {x})
 @
 
 
+\section{Simulation Studies} \label{simulation}
+
+\subsection{Relationship between a component forecaster's bias and importance}
 
 
+\begin{figure}[h!]
+	\centering
+<<fig5.simuplot-imp_bias, fig=TRUE, fig.height=4, echo=FALSE>>==
+simdat <- readRDS("../Data/simulation_f3bias.rds")
+
+simdat %>% 
+        dplyr::select(model, f3_bias, importance, dispersion) %>%
+        dplyr::group_by(f3_bias, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_bias, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        labs(x="b (bias of forecaster 3)", y="Importance")
+@
+	\caption{Importance of three forecasters by various biases of forecaster 3. $F_{1,t} = \text{N}(-1, 1)$, $F_{2,t} = \text{N}(-0.5, 1)$, and $F_{3,t} = \text{N}(b, 1)$. Importance scores were calculated and averaged over 1000 replicates of the forecasting experiments conducted at each value of $b$, incremented by 0.05 from $-1$ to $3$. The results are displayed in different line patterns by model (dashed line for forecaster 1, dash-dotted line for forecaster 2, and solid line for forecaster 3). }
+	\label{fig:simuplot-imp_bias}
+\end{figure}
+
+\newpage
+\subsection{Relationship between component forecaster dispersion and importance}
 
 
+\begin{figure}[h!]
+	\centering
+<<fig6.simuplot-imp_dispersion, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
+simdat <- readRDS("../Data/simulation_f3sharp.rds")
 
-
-
-
+simdat %>% 
+        dplyr::select(model, f3_sharpness, importance, dispersion) %>%
+        dplyr::group_by(f3_sharpness, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_sharpness, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        labs(x="s (standard deviation of forecaster 3)",
+             #title="Importance of three forecasters by different dispersion of forecaster 3", 
+             y="Importance") 
+@
+	\caption{Importance of three forecasters as a function of dispersion of forecaster 3. $F_{1,t} = \text{N}(0, 0.5^2)$, $F_{2,t} = \text{N}(0, 0.7^2)$, and $F_{3,t} = \text{N}(0, s^2).$ Importance scores were calculated and averaged over 1000 replicates of the forecasting experiments conducted at each value of $s$, incremented by 0.05 from $0.1$ to $3$. The results are displayed in different line patterns by model (dashed line for forecaster 1, dash-dotted line for forecaster 2, and solid line for forecaster 3).}
+	\label{fig:simuplot-imp_dispersion}
+\end{figure}
 
 
 
