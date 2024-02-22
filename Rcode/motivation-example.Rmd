@@ -7,22 +7,9 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-library(covidHubUtils)
-library(dplyr)
-library(lubridate)
-library(stringr)
 library(ggplot2)
-library(doParallel)
 library(tidyverse)
 theme_set(theme_bw())
-library(pander)
-library(DT)
-library(ggalt)  #for geom_dumbbell()
-library(pander)
-library(RColorBrewer)
-# get_all_models()
-# datatable(fdat)
-
 library(here)
 setwd(here())
 ```
@@ -54,7 +41,7 @@ forcasts_3mod <- forecasts_MA_2021 %>%
 ggplot(forcasts_3mod, aes(x = target_end_date)) +
         facet_grid(~model) +
         geom_point(aes(y = value, color = "medians"), size=2) +
-        geom_line(aes(y = value, color = "medians"), size=1) +
+        geom_line(aes(y = value, color = "medians"), linewidth=1) +
         geom_ribbon(data=forcasts_3mod, 
                     aes(ymin = lower, ymax = upper, 
                     fill = "#3388FF"),

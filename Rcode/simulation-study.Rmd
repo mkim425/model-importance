@@ -5,20 +5,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-library(covidHubUtils)
 library(dplyr)
-library(lubridate)
-library(stringr)
 library(ggplot2)
-library(doParallel)
-library(tidyverse)
 theme_set(theme_bw())
-library(pander)
-library(DT)
-library(ggalt)  #for geom_dumbbell()
-library(pander)
-# get_all_models()
-# datatable(fdat)
 library(here)
 setwd(here())
 ```
@@ -35,13 +24,11 @@ simdat %>%
                            avg_imp=mean(importance), 
                            "5% qt"=quantile(importance, probs = 0.05), 
                            #"50% qt"=quantile(importance, probs = 0.50),
-                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
-        ggplot(aes(x=f3_bias, y =avg_imp, shape=model)) +
-        scale_shape_manual(values = c(16, 17, 5)) +
-        annotate("rect", xmin=-1,xmax=1,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#F8766D") +
-        annotate("rect", xmin=1,xmax=3,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#619CFF") +
-        geom_line() +
-        geom_point() +
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_bias, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="b (bias of forecaster 3)", y="Importance")
 ```
 
@@ -61,13 +48,11 @@ simdat %>%
                            avg_imp=mean(importance), 
                            "5% qt"=quantile(importance, probs = 0.05), 
                            #"50% qt"=quantile(importance, probs = 0.50),
-                           "95% qt"=quantile(importance, probs = 0.95)) %>% 
-        ggplot(aes(x=f3_sharpness, y =avg_imp, shape=model)) +
-        scale_shape_manual(values = c(16, 17, 5)) +
-        annotate("rect", xmin=0,xmax=0.7,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#F8766D") +
-        annotate("rect", xmin=0.7,xmax=3,ymin=-Inf,ymax=Inf, alpha=0.3, fill="#619CFF") +
-        geom_line() +
-        geom_point() +
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_sharpness, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="s (standard deviation of forecaster 3)",
              #title="Importance of three forecasters by different dispersion of forecaster 3", 
              y="Importance") 

@@ -1,0 +1,99 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\captionsetup[subfigure]{font={bf,small}, skip=1pt, margin=-0.7cm, singlelinecheck=false}
+\usepackage{bbm}
+\usepackage{comment} 
+\usepackage{cite}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{listings}
+\usepackage{algcompatible}
+% OR \usepackage{algorithmic}
+\usepackage{algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\usepackage{booktabs}
+\newcommand{\bftab}{\fontseries{b}\selectfont}
+\newcommand{\code}{\texttt}
+\theoremstyle{definition}
+\newtheorem*{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+\title{Beyond forecast leaderboards: Measuring individual model importance based on contribution to probabilistic ensemble accuracy}
+\author{Minsu Kim, Evan L. Ray, Nicholas G. Reich}
+\date{}
+
+
+\usepackage{Sweave}
+\begin{document}
+\input{manuscript-concordance}
+\maketitle
+
+
+
+\begin{abstract}
+Ensemble forecasting is generally recognized for its ability to outperform individual standalone models in infectious disease forecasting and is therefore considered a robust option for public health decision making and policy planning. The US COVID-19 Forecast Hub has produced a probabilistic ensemble forecast model of COVID-19 cases, hospitalizations, and deaths in the United States based on forecasts from individual models developed by more than 90 different research groups. As the Forecast Hub served as the official short-term forecast of the US Centers for Disease Control and Prevention, it is important to understand the relative importance and contributions of individual models to creating a highly accurate forecast combination. 
+In this work, we propose two practical methods for evaluating the contribution of individual component models. 
+One method uses a leave-one-model-out algorithm when building an ensemble and the other, based on the Shapley value in game theory, considers ensemble models constructed from all possible subsets of individual models. 
+We aim to identify and evaluate methods for measuring the contributions of individual component models to ensemble accuracy. We explore how these metrics are related to the weighted interval score (WIS), a commonly used proper scoring rule for quantile forecasts, and illustrate how these methods provide distinct perspectives when evaluating how much value a component model adds to a probabilistic ensemble model in the presence of other models. Our results show that the most accurate model according to WIS does not always add the most value to the ensemble. This indicates that our proposed methods can be used to capture the contribution of individual models to a more accurate ensemble model, which is difficult to ascertain from standard accuracy metrics alone. This study offers valuable insights into understanding individual forecasting models’ unique features and their roles in contributing to an ensemble model for a specific prediction task.
+    
+\end{abstract}
+
+\section{Introduction}
+
+\begin{figure}[b!]
+\centering
+
+\includegraphics{manuscript-fig1.motivation-example}
+
+\caption{Forecasts of COVID-19 incident deaths at 1- through 4-week horizons in Massachusetts made on November 27, 2021 by three models. Black dots show historical data available as of November 28. Blue dots indicate predictive medians and the shaded bands represent 95\% prediction intervals. The open black circles are observations not available when the forecast was made. The 95\% prediction intervals of the UMass-MechBayes model (truncated here for better visibility of the observed data) extend up to 671 and 1110 for the 3-week and 4-week ahead horizons, respectively. }
+\label{fig:forecasts-example}
+\end{figure}
+
+\newpage
+\section{Methods}\label{sec:methods}
+
+\newpage
+\section{Results}\label{sec:result}
+
+\subsection{Application of the model importance metrics to forecast data from the US COVID-19 Forecast Hub}\label{subsec:application}
+
+\subsubsection{Case study: Relationship between importance score and WIS with data for deaths in Massachusetts in 2021}
+
+\begin{figure}[b!]
+\centering
+\includegraphics{manuscript-fig2.importance-vs-wis-by-model}
+
+\caption{Model importance versus WIS by model for all weeks in 2021. Each point represents a pair of WIS and importance score evaluated at a certain week, and each panel contains 52 points accordingly. Red dots represent WIS and importance score pairs evaluated on December 25, 2021. The importance of an individual model as an ensemble member tends to be inversely correlated with that model's overall prediction accuracy.}
+\label{fig:scatterplot-wis_imp2021}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+	\includegraphics[scale=0.55]{95PIs.pdf}
+		\label{fig:PIs2021}
+\end{subfigure}\par
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+\includegraphics{manuscript-fig3-2.wis_imp20211225}
+
+		\label{fig:plot-wis_imp20211225}
+\end{subfigure}
+\caption{(\subref{fig:PIs2021}) 95\% Prediction intervals (PIs) of individual forecasts (top) and ensemble forecasts built excluding a single model (bottom) on target end date 2021-12-25. For example, the lines on the far left indicate PI for the CovidAnalytics-DELPHI model on the top panel and PI for the ensemble created without the CovidAnalytics-DELPHI model on the bottom panel. Ensemble.ALL represents an ensemble model built on all nine individual models. In each PI, the  end points indicate 0.025 and 0.975 quantiles and the mid-point represents the 0.5 quantile (predictive median). The horizontal dashed lines represent the eventual observation. The ensemble without CovidAnalytics-DELPHI is the only ensemble model with a point estimate below 150. The ensemble without UMass-MechBayes has the lowest dispersion
+among the ensemble models. (\subref{fig:plot-wis_imp20211225}) Model importance of each model versus WIS on target end date 2021-12-25. CovidAnalytics-DELPHI is the most important and also the least accurate by WIS.}
+	\label{fig:20211225}
+\end{figure}
+
+
+
+
+\end{document}
