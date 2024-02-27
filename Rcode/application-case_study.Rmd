@@ -138,7 +138,7 @@ dat <- forecast_ma2021 %>%
         filter(target_end_date == "2021-12-25")
 p.imp_wis.1225 <- dat %>% 
         ggplot(aes(x=wis, y = importance)) + 
-        geom_point(size = 3, color = "red") + 
+        geom_point(shape=21, fill = "black", color="black", size=3) + 
         geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
                          aes(label = model),
                         size = 5,
@@ -170,9 +170,9 @@ dat <- forecast_ma2021 %>%
   mutate(target_end_date=str_remove(target_end_date, "2021-")) 
 p <- dat %>% 
         ggplot(aes(x=wis, y= importance)) +
-        geom_point() +
+        geom_point(shape=24, color = "grey57", size=2) +
         geom_point(data = dat %>% filter(target_end_date == "12-25"), 
-                   color ="red") +
+                   shape=21, fill = "black", color="black", size=2.5) +
         facet_wrap(~ model) +
         labs(#title = "Model importance vs. WIS by Model",
                 x = "WIS",
