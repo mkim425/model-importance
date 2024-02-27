@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2020.4.7)  18 FEB 2024 13:25
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (TeX Live 2020) (preloaded format=pdflatex 2020.4.7)  27 FEB 2024 09:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -424,16 +424,45 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 )
 \c@definition=\count290
 
+(/usr/local/texlive/2020/texmf-dist/tex/latex/parskip/parskip.sty
+Package: parskip 2020-01-22 v2.0d non-zero parskip adjustments
+
+(/usr/local/texlive/2020/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2019/09/21 v2.5h e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count291
+))
+(/usr/local/texlive/2020/texmf-dist/tex/latex/setspace/setspace.sty
+Package: setspace 2011/12/19 v6.7a set line spacing
+)
+(/usr/local/texlive/2020/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2020/01/02 v5.9 Page Geometry
+
+(/usr/local/texlive/2020/texmf-dist/tex/generic/iftex/ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+)
+\Gm@cnth=\count292
+\Gm@cntv=\count293
+\c@Gm@tempcnt=\count294
+\Gm@bindingoffset=\dimen175
+\Gm@wd@mp=\dimen176
+\Gm@odd@mp=\dimen177
+\Gm@even@mp=\dimen178
+\Gm@layoutwidth=\dimen179
+\Gm@layoutheight=\dimen180
+\Gm@layouthoffset=\dimen181
+\Gm@layoutvoffset=\dimen182
+\Gm@dimlist=\toks33
+)
 (/Library/Frameworks/R.framework/Resources/share/texmf/tex/latex/Sweave.sty
 Package: Sweave 
 
 (/usr/local/texlive/2020/texmf-dist/tex/latex/fancyvrb/fancyvrb.sty
 Package: fancyvrb 2020/01/13 v3.5 verbatim text (tvz,hv)
-\FV@CodeLineNo=\count291
+\FV@CodeLineNo=\count295
 \FV@InFile=\read3
 \FV@TabBox=\box51
-\c@FancyVerbLine=\count292
-\FV@StepNumber=\count293
+\c@FancyVerbLine=\count296
+\FV@StepNumber=\count297
 \FV@OutFile=\write4
 )
 (/usr/local/texlive/2020/texmf-dist/tex/latex/base/textcomp.sty
@@ -444,42 +473,42 @@ Package: fontenc 2020/02/11 v2.0o Standard LaTeX package
 ))
 (/usr/local/texlive/2020/texmf-dist/tex/latex/l3backend/l3backend-pdfmode.def
 File: l3backend-pdfmode.def 2020-03-12 L3 backend support: PDF mode
-\l__kernel_color_stack_int=\count294
+\l__kernel_color_stack_int=\count298
 \l__pdf_internal_box=\box52
 )
 (./manuscript.aux)
 \openout1 = `manuscript.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 34.
-LaTeX Font Info:    ... okay on input line 34.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 40.
+LaTeX Font Info:    ... okay on input line 40.
 
 (/usr/local/texlive/2020/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count295
-\scratchdimen=\dimen175
+\scratchcounter=\count299
+\scratchdimen=\dimen183
 \scratchbox=\box53
-\nofMPsegments=\count296
-\nofMParguments=\count297
-\everyMPshowfont=\toks33
-\MPscratchCnt=\count298
-\MPscratchDim=\dimen176
-\MPnumerator=\count299
-\makeMPintoPDFobject=\count300
-\everyMPtoPDFconversion=\toks34
+\nofMPsegments=\count300
+\nofMParguments=\count301
+\everyMPshowfont=\toks34
+\MPscratchCnt=\count302
+\MPscratchDim=\dimen184
+\MPnumerator=\count303
+\makeMPintoPDFobject=\count304
+\everyMPtoPDFconversion=\toks35
 ) (/usr/local/texlive/2020/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 
@@ -503,7 +532,7 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
 \AtBeginShipoutBox=\box54
-Package hyperref Info: Link coloring ON on input line 34.
+Package hyperref Info: Link coloring ON on input line 40.
 
 (/usr/local/texlive/2020/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2019/09/16 v2.46 Cross-referencing by name of section
@@ -515,91 +544,160 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 ty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count301
+\c@section@level=\count305
 )
-LaTeX Info: Redefining \ref on input line 34.
-LaTeX Info: Redefining \pageref on input line 34.
-LaTeX Info: Redefining \nameref on input line 34.
+LaTeX Info: Redefining \ref on input line 40.
+LaTeX Info: Redefining \pageref on input line 40.
+LaTeX Info: Redefining \nameref on input line 40.
  (./manuscript.out) (./manuscript.out)
 \@outlinefile=\write5
 \openout5 = `manuscript.out'.
 
-\c@lstlisting=\count302
- (./manuscript-concordance.tex)
-<manuscript-fig1.motivation-example.pdf, id=25, 433.62pt x 433.62pt>
+\c@lstlisting=\count306
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: letterpaper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(85.35826pt, 443.57848pt, 85.35826pt)
+* v-part:(T,H,B)=(56.9055pt, 681.15898pt, 56.9055pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=443.57848pt
+* \textheight=681.15898pt
+* \oddsidemargin=13.08827pt
+* \evensidemargin=13.08827pt
+* \topmargin=-52.36449pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=49.79231pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+(./manuscript-concordance.tex)
+<manuscript-fig1.motivation-example.pdf, id=41, 433.62pt x 433.62pt>
 File: manuscript-fig1.motivation-example.pdf Graphic file (type pdf)
 <use manuscript-fig1.motivation-example.pdf>
 Package pdftex.def Info: manuscript-fig1.motivation-example.pdf  used on input 
-line 53.
-(pdftex.def)             Requested size: 276.00105pt x 276.0139pt.
+line 59.
+(pdftex.def)             Requested size: 354.86412pt x 354.88258pt.
+ [1
 
-[1
-
-{/usr/local/texlive/2020/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-[2 <./manuscript-fig1.motivation-example.pdf>]
-<manuscript-fig2.importance-vs-wis-by-model.pdf, id=51, 433.62pt x 433.62pt>
+{/usr/local/texlive/2020/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2 <./m
+anuscript-fig1.motivation-example.pdf>]
+<manuscript-fig2.importance-vs-wis-by-model.pdf, id=67, 433.62pt x 433.62pt>
 File: manuscript-fig2.importance-vs-wis-by-model.pdf Graphic file (type pdf)
 <use manuscript-fig2.importance-vs-wis-by-model.pdf>
 Package pdftex.def Info: manuscript-fig2.importance-vs-wis-by-model.pdf  used o
-n input line 71.
-(pdftex.def)             Requested size: 276.00105pt x 276.0139pt.
+n input line 77.
+(pdftex.def)             Requested size: 354.86412pt x 354.88258pt.
 
-Overfull \hbox (19.91684pt too wide) in paragraph at lines 81--81
+Overfull \hbox (19.91684pt too wide) in paragraph at lines 87--87
 [] [] 
  []
 
-<95PIs.pdf, id=52, 561.09625pt x 601.24625pt>
-File: 95PIs.pdf Graphic file (type pdf)
-<use 95PIs.pdf>
-Package pdftex.def Info: 95PIs.pdf  used on input line 82.
+<manuscript-fig3-1.wis_imp20211225.pdf, id=68, 433.62pt x 216.81pt>
+File: manuscript-fig3-1.wis_imp20211225.pdf Graphic file (type pdf)
+<use manuscript-fig3-1.wis_imp20211225.pdf>
+Package pdftex.def Info: manuscript-fig3-1.wis_imp20211225.pdf  used on input l
+ine 88.
+(pdftex.def)             Requested size: 354.86412pt x 177.44128pt.
+
+Overfull \hbox (19.91684pt too wide) in paragraph at lines 93--93
+[] [] 
+ []
+
+<manuscript-fig3-2.95PIs.pdf, id=69, 561.09625pt x 601.24625pt>
+File: manuscript-fig3-2.95PIs.pdf Graphic file (type pdf)
+<use manuscript-fig3-2.95PIs.pdf>
+Package pdftex.def Info: manuscript-fig3-2.95PIs.pdf  used on input line 94.
 (pdftex.def)             Requested size: 308.60388pt x 330.68645pt.
 
-Overfull \hbox (19.91684pt too wide) in paragraph at lines 86--86
-[] [] 
- []
+LaTeX Warning: Float too large for page by 40.54948pt on input line 100.
 
-<manuscript-fig3-2.wis_imp20211225.pdf, id=53, 433.62pt x 433.62pt>
-File: manuscript-fig3-2.wis_imp20211225.pdf Graphic file (type pdf)
-<use manuscript-fig3-2.wis_imp20211225.pdf>
-Package pdftex.def Info: manuscript-fig3-2.wis_imp20211225.pdf  used on input l
-ine 87.
-(pdftex.def)             Requested size: 276.00105pt x 276.0139pt.
+[3 <./manuscript-fig2.importance-vs-wis-by-model.pdf>] [4 <./manuscript-fig3-1.
+wis_imp20211225.pdf> <./manuscript-fig3-2.95PIs.pdf>]
+<manuscript-fig4.corr-NAworst.pdf, id=114, 433.62pt x 433.62pt>
+File: manuscript-fig4.corr-NAworst.pdf Graphic file (type pdf)
+<use manuscript-fig4.corr-NAworst.pdf>
+Package pdftex.def Info: manuscript-fig4.corr-NAworst.pdf  used on input line 1
+33.
+(pdftex.def)             Requested size: 354.86412pt x 354.88258pt.
+<manuscript-fig5.simuplot-imp_bias.pdf, id=115, 433.62pt x 433.62pt>
+File: manuscript-fig5.simuplot-imp_bias.pdf Graphic file (type pdf)
+<use manuscript-fig5.simuplot-imp_bias.pdf>
+Package pdftex.def Info: manuscript-fig5.simuplot-imp_bias.pdf  used on input l
+ine 170.
+(pdftex.def)             Requested size: 354.86412pt x 354.88258pt.
 
-LaTeX Warning: Float too large for page by 221.77277pt on input line 94.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 99.
-[3 <./manuscript-fig2.importance-vs-wis-by-model.pdf>] [4 <./95PIs.pdf> <./manu
-script-fig3-2.wis_imp20211225.pdf>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 99.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[5 <./manuscript-fig4.corr-NAworst.pdf>]
+<manuscript-fig6.simuplot-imp_dispersion.pdf, id=128, 433.62pt x 433.62pt>
+File: manuscript-fig6.simuplot-imp_dispersion.pdf Graphic file (type pdf)
+<use manuscript-fig6.simuplot-imp_dispersion.pdf>
+Package pdftex.def Info: manuscript-fig6.simuplot-imp_dispersion.pdf  used on i
+nput line 181.
+(pdftex.def)             Requested size: 354.86412pt x 354.88258pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 188.
+[6] [7 <./manuscript-fig5.simuplot-imp_bias.pdf>] [8 <./manuscript-fig6.simuplo
+t-imp_dispersion.pdf>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 188.
  (./manuscript.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 99.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 99.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 188.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 188.
 Package rerunfilecheck Info: File `manuscript.out' has not changed.
-(rerunfilecheck)             Checksum: 5744DC50AF96B504C8BE16DA29C2A891;436.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 99.
+(rerunfilecheck)             Checksum: B087733247230EEA59FBBEBC88D75163;864.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 188.
  ) 
 Here is how much of TeX's memory you used:
- 11014 strings out of 480608
- 165554 string characters out of 5903631
- 454816 words of memory out of 5000000
- 26669 multiletter control sequences out of 15000+600000
- 549435 words of font info for 66 fonts, out of 8000000 for 9000
+ 11879 strings out of 480608
+ 178235 string characters out of 5903631
+ 481094 words of memory out of 5000000
+ 27496 multiletter control sequences out of 15000+600000
+ 550969 words of font info for 68 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 48i,9n,55p,1197b,493s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 48i,13n,55p,1197b,491s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2020/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}
-</usr/local/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx0800.pfb></
-usr/local/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></us
-r/local/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/
-local/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/lo
-cal/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/loca
-l/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/
-texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/te
-xlive/2020/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texl
-ive/2020/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb>
-Output written on manuscript.pdf (4 pages, 243025 bytes).
+</usr/local/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
+/usr/local/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></u
+sr/local/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr
+/local/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/lo
+cal/texlive/2020/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/loc
+al/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx0800.pfb></usr/local
+/texlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/local/t
+exlive/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/tex
+live/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texli
+ve/2020/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive
+/2020/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb></usr/local/texlive/2
+020/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/texlive/202
+0/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2020/
+texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2020/te
+xmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb>
+Output written on manuscript.pdf (8 pages, 352600 bytes).
 PDF statistics:
- 135 PDF objects out of 1000 (max. 8388607)
- 101 compressed objects within 2 object streams
- 13 named destinations out of 1000 (max. 500000)
- 65 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 219 PDF objects out of 1000 (max. 8388607)
+ 169 compressed objects within 2 object streams
+ 26 named destinations out of 1000 (max. 500000)
+ 112 words of extra memory for PDF output out of 10000 (max. 10000000)
 

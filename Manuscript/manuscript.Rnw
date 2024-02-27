@@ -175,12 +175,7 @@ p
 \centering
 \begin{subfigure}{\textwidth}
 	\subcaption{}
-	\includegraphics[scale=0.55]{manuscript-fig3-1.95PIs.pdf}
-		\label{fig:PIs2021}
-\end{subfigure}\par
-\begin{subfigure}{\textwidth}
-	\subcaption{}
-<<fig3-2.wis_imp20211225, fig=TRUE, width=6, height=3, echo=FALSE>>==
+<<fig3-1.wis_imp20211225, fig=TRUE, width=6, height=3, echo=FALSE>>==
 dat <- forecast_ma2021 %>% 
         filter(!grepl('Ens', model)) %>% 
         filter(target_end_date == "2021-12-25")
@@ -205,6 +200,11 @@ p.imp_wis.1225
 @
 
 \label{fig:plot-wis_imp20211225}
+\end{subfigure}\par
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+	\includegraphics[scale=0.55]{manuscript-fig3-2.95PIs.pdf}
+		\label{fig:PIs2021}
 \end{subfigure}
 \caption{(\subref{fig:PIs2021}) 95\% Prediction intervals (PIs) of individual forecasts (top) and ensemble forecasts built excluding a single model (bottom) on target end date 2021-12-25. For example, the lines on the far left indicate PI for the CovidAnalytics-DELPHI model on the top panel and PI for the ensemble created without the CovidAnalytics-DELPHI model on the bottom panel. Ensemble.ALL represents an ensemble model built on all nine individual models. In each PI, the  end points indicate 0.025 and 0.975 quantiles and the mid-point represents the 0.5 quantile (predictive median). The horizontal dashed lines represent the eventual observation. The ensemble without CovidAnalytics-DELPHI is the only ensemble model with a point estimate below 150. The ensemble without UMass-MechBayes has the lowest dispersion
 among the ensemble models. (\subref{fig:plot-wis_imp20211225}) Model importance of each model versus WIS on target end date 2021-12-25. CovidAnalytics-DELPHI is the most important and also the least accurate by WIS.}
