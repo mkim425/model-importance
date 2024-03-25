@@ -62,8 +62,4 @@ build_array <- function(dat, truth) {
     }
   }
   return(arr_list)
-  # save the array
-  # saveRDS(arr_list, "RE-calc-out/array-horizon", h, ".rds")
-  path <- "/work/pi_nick_umass_edu/minsu_project"
-  saveRDS(arr_list, paste0(path, "/output/array-horizon",h,".rds"))
 }
