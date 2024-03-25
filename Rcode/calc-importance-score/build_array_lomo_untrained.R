@@ -1,61 +1,69 @@
-## Build 2-dimensional array (forecast date, location)
+## Build 2-dimensional array (forecast/reference date, location)
 
-# @param dat is forecast data 'data.frame' containing all the forecasts of 
+# dat is forecast data 'data.frame' containing all the forecasts of
 # a certain combination of location, forecast date, and horizon
-# @param truth require data.frame
+# truth require data.frame
 
-build_array <- function(dat, truth){
-        # if forecast dates are not aligned: 
-        # dates <- dat$forecast_date[which(weekdays(dat$forecast_date) == "Monday")] %>% unique()
-        dates <- dat$forecast_date %>% unique() %>% as.character()
-        h <- dat$horizon %>% unique() 
-        incl_locations <- dat$location %>% unique()
-        models <- c("BPagano-RtDriven", "COVIDhub-baseline", "CU-select",
-                    "GT-DeepCOVID", "Karlen-pypm", "MOBS-GLEAM_COVID",
-                    "PSI-DRAFT", "RobertWalraven-ESG", "UCSD_NEU-DeepGLEAM",
-                    "USC-SI_kJalpha") 
-        
-        # create empty array 
-        arr <- array(NA_real_, dim=c(length(dates), length(incl_locations)),
-                     dimnames = list(Time = dates,
-                                     Location = incl_locations))
-        
-        arr_list <- lapply(models, function(x) arr)
-        names(arr_list) <- models
-        
-        
-        dat_gp <- dat %>%
-                # if forecast dates are not aligned:
-                # group_by(target_end_date, location) %>%
-                group_by(location) %>%
-                group_split()
+build_array <- function(dat, truth) {
+  # we use reference date, so remove forecast_date column
+  dat <- dat %>% select(-any_of("forecast_date"))
+  # make location a character
+  truth <- truth %>% mutate(location = as.character(location))
+  # get unique dates, horizons, and locations
+  dates <- dat$reference_date %>%
+    unique() %>%
+    as.character()
+  h <- dat$horizon %>% unique()
+  incl_locations <- truth$location %>% unique()
 
-        out <- dat_gp %>%
-                purrr::map(importance_score_lomo, truth=truth, ensemble_method="mean")
+  models <- c(
+    "BPagano-RtDriven", "COVIDhub-baseline", "CU-select",
+    "GT-DeepCOVID", "Karlen-pypm", "MOBS-GLEAM_COVID",
+    "PSI-DRAFT", "RobertWalraven-ESG", "UCSD_NEU-DeepGLEAM",
+    "USC-SI_kJalpha"
+  )
 
+  # create empty array
+  arr <- array(NA_real_,
+    dim = c(length(dates), length(incl_locations)),
+    dimnames = list(
+      Time = dates,
+      Location = incl_locations
+    )
+  )
 
-        for (t in 1:length(dates)){
-                # print(dates[t])
+  arr_list <- lapply(models, function(x) arr)
+  names(arr_list) <- models
 
-                for (l in 1:length(incl_locations)){
-                        # print(incl_locations[l])
+  # split the data by location
+  dat_gp <- dat %>%
+    group_by(reference_date, location) %>%
+    group_split()
+  # calculate importance score in LOMO for multiple locations at once
+  out <- dat_gp %>%
+    purrr::map_dfr(~ importance_score_lomo(.x, truth = truth))
 
-                        for(i in 1:length(models)){
-                                if (! models[i] %in% out[[(t-1)*length(incl_locations)+l]]$Model){
-                                        arr_list[[i]][t, l] <- NA
-                                } else{
-                                        score <- out[(t-1)*length(incl_locations)+l] %>%
-                                                as.data.frame() %>%
-                                                filter(Model == models[i] ) %>%
-                                                select(Importance_score) %>% pull()
-                                        arr_list[[i]][t, l] <- score
-                                }
-                        }
-                }
+  # assign the importance scores to the array
+  for (t in dates) {
+    # print(t)
+    for (l in incl_locations) {
+      # print(l)
+      for (i in models) {
+        score <- out %>%
+          filter(reference_date == t, location == l, Model == i) %>%
+          select(Importance_score) %>%
+          pull()
+        if (length(score) == 0) {
+          arr_list[[i]][t, l] <- NA
+        } else {
+          arr_list[[i]][t, l] <- score
         }
-        
-        saveRDS(arr_list, "../output/array-horizon",h,"-",dates,".rds")
-} 
-
-
-
+      }
+    }
+  }
+  return(arr_list)
+  # save the array
+  # saveRDS(arr_list, "RE-calc-out/array-horizon", h, ".rds")
+  path <- "/work/pi_nick_umass_edu/minsu_project"
+  saveRDS(arr_list, paste0(path, "/output/array-horizon",h,".rds"))
+}
