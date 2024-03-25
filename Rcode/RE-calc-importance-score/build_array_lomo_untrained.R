@@ -61,5 +61,7 @@ build_array <- function(dat, truth) {
       }
     }
   }
-  return(arr_list)
+
+  # save the array
+  saveRDS(arr_list, "RE-calc-out/array-horizon", h, ".rds")
 }

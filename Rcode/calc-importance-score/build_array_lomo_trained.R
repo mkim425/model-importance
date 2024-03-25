@@ -1,8 +1,8 @@
 ## Build 2-dimensional array (forecast date, location)
 
-# @param dat is the forecast data 'data.frame' containing all the forecasts of 
+# dat is the forecast data 'data.frame' containing all the forecasts of 
 # a certain combination of location, forecast date, and horizon
-# @param truth require data.frame
+# truth require data.frame
 
 build_array_lomo_trained <- function(dat, truth){
         ## if forecast dates are not aligned: 
@@ -53,10 +53,7 @@ build_array_lomo_trained <- function(dat, truth){
                 }
         }
         
-        # saveRDS(arr_list, "../output/array-horizon",h,"-",dates,".rds")
-        
-        ## when calculating scores for single location
-        saveRDS(arr_list, "../output/array-h",h,"-loc",incl_locations,"-",dates,".rds")
+        return(arr_list)
 } 
 
 
