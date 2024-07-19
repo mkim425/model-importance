@@ -1,7 +1,5 @@
 ## Calculate Importance scores of component models using Leave one model out algorithm
 
-# Note: I used 'use_median_as_point = TRUE' in score_forecasts when calculating WIS
-
 library(covidHubUtils)
 library(hubEnsembles)
 suppressPackageStartupMessages(library(dplyr))
@@ -20,7 +18,8 @@ importance_score_lomo <- function(forecast_data, truth) {
     # Convert model output to a `model_out_tbl` class object
     hubUtils::as_model_out_tbl() %>%
     # Validate a `model_out_tbl` object
-    hubUtils::validate_model_out_tbl()
+    hubUtils::validate_model_out_tbl() %>%
+    select(-any_of("forecast_date"))
 
   # Ensemble forecasts constructed with all possible models by task_id
   ensemble_allmodels <- hubEnsembles::simple_ensemble(valid_tbl) %>%
@@ -81,6 +80,6 @@ importance_score_lomo <- function(forecast_data, truth) {
     filter(model != "Ensemble.all") %>%
     mutate(Model = str_remove(model, "Ens.wo.")) %>%
     select(Model, reference_date, location, Importance_score, horizon, target_end_date)
-  
+
   return(result)
 }
