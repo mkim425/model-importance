@@ -4,7 +4,7 @@
 # a certain combination of location, forecast date, and horizon
 # truth require data.frame
 
-build_array <- function(dat, truth) {
+build_array_lasomo <- function(dat, truth) {
   # we use reference date, so remove forecast_date column
   dat <- dat %>% select(-any_of("forecast_date"))
   # make location a character
@@ -41,7 +41,7 @@ build_array <- function(dat, truth) {
     group_split()
   # calculate importance score in LOMO for multiple locations at once
   out <- dat_gp %>%
-    purrr::map_dfr(~ importance_score_lomo(.x, truth = truth))
+    purrr::map_dfr(~ importance_score_lasomo(.x, truth = truth))
 
   # assign the importance scores to the array
   for (t in dates) {
@@ -61,5 +61,6 @@ build_array <- function(dat, truth) {
       }
     }
   }
+
   return(arr_list)
 }

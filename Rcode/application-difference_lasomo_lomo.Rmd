@@ -49,14 +49,17 @@ source("../Rcode/relative_wis.R")
 # Submission Proportion
 
 ```{r submission-proportion-wis, include=FALSE}
-# df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds") 
-# df_all_scores_extended %>% 
-#         group_by(model) %>% 
-#         summarise(na_prop = sum(is.na(wis))/21800,
-#                   submission_proportion = sum(!is.na(wis))/21800,
-#                   submission_count = sum(!is.na(wis))) %>% 
-#         ungroup() %>% 
-#         arrange(desc(submission_proportion))
+df_all_scores_extended <- readRDS("../Data/df_all_scores_extended.rds")
+props <- df_all_scores_extended %>%
+        group_by(model) %>%
+        summarise(#na_prop = sum(is.na(wis))/21800,
+                  submission_proportion = round(sum(!is.na(wis))/21800 * 100, 1),
+                  submission_count = sum(!is.na(wis))) %>%
+        ungroup() %>%
+        arrange(desc(submission_proportion)) %>% 
+        rename(Model = model,
+                 "Submission rate (%)" = submission_proportion,
+                 "Number of predictions (total:21800)" = submission_count)
 ```
 
 
@@ -65,7 +68,7 @@ source("../Rcode/relative_wis.R")
 For each model, location (l), time (t), horizon (h), replace NAs by the worst scores; 
 by max WIS over all non-NA models for WIS, by 0 for rank, and by min importance scores over all non-NA models.
 
-```{r table}
+```{r table, include=FALSE}
 df_all_scores_extended_NAworst <- readRDS("../Data/df_all_scores_extended_NAworst.rds") 
 
 # compute relative wis compared to the "COVIDhub-baseline" model
@@ -85,7 +88,8 @@ compare_NAworst <- df_all_scores_extended_NAworst %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
-
+# saveRDS(compare_NAworst, "../Data/compare_NAworst.rds")
+compare_NAworst <- readRDS("../Data/compare_NAworst.rds")
 compare_NAworst %>% 
         rename(WIS=meanWIS, 
                Rank=meanRank, 
@@ -150,6 +154,7 @@ annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) 
 # Summary of relationships between metrics 
 
 ```{r pairs-plot-NAworst, message=FALSE}
+compare_NAworst <- readRDS("../Data/compare_NAworst.rds")
 d_NAworst <- compare_NAworst %>% 
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
@@ -162,7 +167,7 @@ p.pairs <- ggpairs(
   d_NAworst %>% select(c(2,5:9)),
   columnLabels = colnames,
   labeller = "label_parsed"
-)
+) + theme(axis.text.x=element_text(angle = 90, vjust = -0.01))
 
 p.pairs 
 

@@ -3,10 +3,10 @@
 ## where models in the training set is not the same as the model in the current set,
 ## which results in NA value.
 
-# @param forecast_data 'data.frame' containing all the forecasts of 
+# forecast_data 'data.frame' containing all the forecasts of 
 # a certain combination of location, forecast date, and horizon
-# @param truth require data.frame
-# @param ensemble_method method to create quantile ensemble, 
+# truth require data.frame
+# ensemble_method method to create quantile ensemble, 
 # either `median` (default) or `mean`.
 
 # Note: I used 'use_median_as_point = TRUE' in score_forecasts when calculating WIS

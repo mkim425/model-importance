@@ -1,0 +1,349 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+\usepackage{amsmath, bm}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\captionsetup[subfigure]{font={bf,small}, skip=1pt, margin=-0.7cm, singlelinecheck=false}
+\usepackage{bbm}
+\usepackage{comment} 
+\usepackage{cite}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{listings}
+\usepackage{algcompatible}
+% OR \usepackage{algorithmic}
+\usepackage{algorithm}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\usepackage{booktabs}
+\newcommand{\bftab}{\fontseries{b}\selectfont}
+\newcommand{\code}{\texttt}
+\theoremstyle{definition}
+\newtheorem*{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+\usepackage[skip=10pt plus1pt]{parskip}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+
+\title{Beyond forecast leaderboards: Measuring individual model importance based on contribution to probabilistic ensemble accuracy}
+\author{Minsu Kim, Evan L. Ray, Nicholas G. Reich}
+\date{}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+<<setup, echo=FALSE>>=
+library(knitr)
+library(kableExtra)
+library(xtable)
+# evaluate fig.cap after a chunk is evaluated
+opts_knit$set(eval.after = 'fig.cap')
+library(ggplot2)
+library(GGally)
+library(tidyverse)
+library(ggrepel)
+theme_set(theme_bw())
+@
+
+
+\begin{abstract}
+Ensemble forecasting is generally recognized for its ability to outperform individual standalone models in infectious disease forecasting and is therefore considered a robust option for public health decision making and policy planning. The US COVID-19 Forecast Hub has produced a probabilistic ensemble forecast model of COVID-19 cases, hospitalizations, and deaths in the United States based on forecasts from individual models developed by more than 90 different research groups. As the Forecast Hub served as the official short-term forecast of the US Centers for Disease Control and Prevention, it is important to understand the relative importance and contributions of individual models to creating a highly accurate forecast combination. 
+In this work, we propose two practical methods for evaluating the contribution of individual component models. 
+One method uses a leave-one-model-out algorithm when building an ensemble and the other, based on the Shapley value in game theory, considers ensemble models constructed from all possible subsets of individual models. 
+We aim to identify and evaluate methods for measuring the contributions of individual component models to ensemble accuracy. We explore how these metrics are related to the weighted interval score (WIS), a commonly used proper scoring rule for quantile forecasts, and illustrate how these methods provide distinct perspectives when evaluating how much value a component model adds to a probabilistic ensemble model in the presence of other models. Our results show that the most accurate model according to WIS does not always add the most value to the ensemble. This indicates that our proposed methods can be used to capture the contribution of individual models to a more accurate ensemble model, which is difficult to ascertain from standard accuracy metrics alone. This study offers valuable insights into understanding individual forecasting models’ unique features and their roles in contributing to an ensemble model for a specific prediction task.
+    
+\end{abstract}
+
+\section{Introduction}
+
+\begin{figure}[b!]
+\centering
+
+<<fig1.motivation-example, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
+# Truth data
+truth.ma.2021 <- read.csv("../Data/truth_MA_2021.csv") %>% 
+  select(target_end_date, value) 
+truth.ma.2021$target_end_date <- as.Date(truth.ma.2021$target_end_date)
+
+# all forecasts for MA, 2021
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv") 
+forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)        
+
+# extract data for only 3 models
+forcasts_3mod <- forecasts_MA_2021 %>% 
+        filter(model %in% c("CovidAnalytics-DELPHI", "Karlen-pypm", "UMass-MechBayes"),
+               #horizon == 4,
+               forecast_date %in% c("2021-11-28", "2021-11-29")) %>% 
+        select(model, horizon, target_end_date, quantile, value) %>% 
+        filter(quantile %in% c(0.025, 0.5, 0.975)) %>% 
+        pivot_wider(names_from = quantile, values_from = value) %>% 
+        rename(lower = '0.025', upper = '0.975', value = '0.5')
+
+ggplot(forcasts_3mod, aes(x = target_end_date)) +
+        facet_grid(~model) +
+        geom_point(aes(y = value, color = "medians"), size=2) +
+        geom_line(aes(y = value, color = "medians"), linewidth=1) +
+        geom_ribbon(data=forcasts_3mod, 
+                    aes(ymin = lower, ymax = upper, 
+                    fill = "#3388FF"),
+                    alpha = 0.5) +
+        geom_point(data = truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"),
+                   aes(y= value, group=1, color = "obs")) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date <= "2021-11-27"), 
+                  aes(y= value, group=1, color = "obs")) +
+        geom_point(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  shape=1, alpha = 1) +
+        geom_line(data=truth.ma.2021 %>% filter(target_end_date > "2021-11-27"), 
+                  aes(y= value, group=1, color = "truth"), 
+                  alpha = 0.75) +
+        coord_cartesian(ylim = c(0, 500)) +
+        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
+        labs(y = "Weekly Deaths",
+             # title = "Forecasts of incident deaths in Massachusetts on November 28, 2021", 
+             x="Date")  +
+        scale_color_manual(name = "", 
+                           values = c("medians"="DodgerBlue", 
+                                      "obs"="Black", 
+                                      "truth"="Black"), 
+                           labels = c("Forecast (Predictive median)", 
+                                      "Observed data before forecasting", 
+                                      "Eventually observed value")) + 
+        scale_fill_manual("", values="#3388FF", 
+                          labels = "95% Prediction interval") +
+        theme(axis.text.x = element_text(size=8, angle=90),
+              legend.title = element_blank(),
+              legend.text = element_text(size=10),
+              legend.position = "bottom", 
+              legend.direction = "vertical", 
+              legend.box = "horizontal")
+
+@
+
+\caption{Forecasts of COVID-19 incident deaths at 1- through 4-week horizons in Massachusetts made on November 27, 2021 by three models. Black dots show historical data available as of November 28. Blue dots indicate predictive medians and the shaded bands represent 95\% prediction intervals. The open black circles are observations not available when the forecast was made. The 95\% prediction intervals of the UMass-MechBayes model (truncated here for better visibility of the observed data) extend up to 671 and 1110 for the 3-week and 4-week ahead horizons, respectively. }
+\label{fig:forecasts-example}
+\end{figure}
+
+\newpage
+\section{Methods}\label{sec:methods}
+
+\newpage
+\section{Results}\label{sec:result}
+
+\subsection{Application of the model importance metrics to forecast data from the US COVID-19 Forecast Hub}\label{subsec:application}
+
+\subsubsection{Case study: Relationship between importance score and WIS with data for deaths in Massachusetts in 2021}
+
+\begin{figure}[b!]
+\centering
+<<fig2.importance-vs-wis-by-model, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
+forecast_ma2021 <- readRDS("../Data/forecast_death_ma2021.rds") %>% 
+  dplyr::select(model, importance, wis, target_end_date, location) 
+dat <- forecast_ma2021 %>% 
+  dplyr::filter(!grepl('Ens', model)) %>% 
+  dplyr::mutate(target_end_date=str_remove(target_end_date, "2021-")) 
+p <- dat %>% 
+        ggplot(aes(x=wis, y= importance)) +
+        geom_point() +
+        geom_point(data = dat %>% dplyr::filter(target_end_date == "12-25"), 
+                   color ="red") +
+        facet_wrap(~ model) +
+        labs(#title = "Model importance vs. WIS by Model",
+                x = "WIS",
+                y = "Importance") + 
+        theme(axis.text=element_text(size=10),
+              axis.title=element_text(size=16),
+              legend.position = "none")
+p
+
+@
+
+\caption{Model importance versus WIS by model for all weeks in 2021. Each point represents a pair of WIS and importance score evaluated at a certain week, and each panel contains 52 points accordingly. Red dots represent WIS and importance score pairs evaluated on December 25, 2021. The importance of an individual model as an ensemble member tends to be inversely correlated with that model's overall prediction accuracy.}
+\label{fig:scatterplot-wis_imp2021}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+<<fig3-1.wis_imp20211225, fig=TRUE, width=6, height=3, echo=FALSE>>==
+dat <- forecast_ma2021 %>% 
+        filter(!grepl('Ens', model)) %>% 
+        filter(target_end_date == "2021-12-25")
+p.imp_wis.1225 <- dat %>% 
+        ggplot(aes(x=wis, y = importance)) + 
+        geom_point(size = 3, color = "red") + 
+        geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
+                         aes(label = model),
+                         size = 4,
+                         nudge_x = -32,
+                         nudge_y = -2,
+                         box.padding = 0.5,
+                         point.padding = 0.5,
+                         arrow = arrow(length = unit(0.03, "npc"))) + 
+        xlim(0,130) + 
+        labs(y = "Importance",
+             x = "WIS") + 
+        theme(axis.text=element_text(size=10),
+              axis.title=element_text(size=12),
+              legend.position="none")
+p.imp_wis.1225
+@
+
+\label{fig:plot-wis_imp20211225}
+\end{subfigure}\par
+\begin{subfigure}{\textwidth}
+	\subcaption{}
+	\includegraphics[scale=0.55]{manuscript-fig3-2.95PIs.pdf}
+		\label{fig:PIs2021}
+\end{subfigure}
+\caption{(\subref{fig:PIs2021}) 95\% Prediction intervals (PIs) of individual forecasts (top) and ensemble forecasts built excluding a single model (bottom) on target end date 2021-12-25. For example, the lines on the far left indicate PI for the CovidAnalytics-DELPHI model on the top panel and PI for the ensemble created without the CovidAnalytics-DELPHI model on the bottom panel. Ensemble.ALL represents an ensemble model built on all nine individual models. In each PI, the  end points indicate 0.025 and 0.975 quantiles and the mid-point represents the 0.5 quantile (predictive median). The horizontal dashed lines represent the eventual observation. The ensemble without CovidAnalytics-DELPHI is the only ensemble model with a point estimate below 150. The ensemble without UMass-MechBayes has the lowest dispersion
+among the ensemble models. (\subref{fig:plot-wis_imp20211225}) Model importance of each model versus WIS on target end date 2021-12-25. CovidAnalytics-DELPHI is the most important and also the least accurate by WIS.}
+\label{fig:20211225}
+\end{figure}
+
+
+
+\newpage
+\subsubsection{Differences in importance scores measured by different algorithms and ensemble methods}
+
+<<tab1.submission-prop, echo=FALSE, results = tex>>==
+tab1 <- readRDS("../Data/df_all_scores_extended.rds") %>%
+        group_by(model) %>%
+        summarise(
+                  submission_proportion = round(sum(!is.na(wis))/21800 * 100, 1),
+                  submission_count = sum(!is.na(wis))
+                  ) %>%
+        ungroup() %>%
+        arrange(desc(submission_proportion)) %>% 
+        rename(Model = model,
+               "Submission rate (%)" = submission_proportion,
+               "Number of predictions (total:21800)" = submission_count)
+xtab1 <- xtable(tab1, digits=1, 
+       caption = "Submission rates (rounded to one decimal place) and the number of individual forecasts made by 10 models for the US 50 states and 1-4 horizons from November 2020 to November 2022 (109 weeks).", 
+       align="|c|ccc|")
+print(xtab1, include.rownames=FALSE)
+@
+
+
+
+\begin{figure}[h!]
+\centering
+<<fig4.corr-NAworst, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
+compare_NAworst <- readRDS("../Data/compare_NAworst.rds")
+d_NAworst <- compare_NAworst %>% 
+        mutate(neg_WIS=-meanWIS) %>% 
+        relocate(neg_WIS, .after=model) 
+
+colnames <- c(paste0("-WIS"), paste0("Rank"), 
+              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
+              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+
+p.pairs <- ggpairs(
+  d_NAworst %>% select(c(2,5:9)),
+  columnLabels = colnames,
+  labeller = "label_parsed"
+) + theme(axis.text.x=element_text(angle = 90, vjust = -0.01))
+
+p.pairs 
+@
+
+\caption{Relationship between summary metrics computed across the entire evaluation period. One black dot corresponds to one model, with the position representing the average scores across the entire evaluation period for the metrics corresponding to the row and column of the plot matrix.}
+\label{fig:corr-NAworst} 
+\end{figure}
+
+
+<<tab2.score-compare-NAworst, echo=FALSE, results = tex>>==
+tab2 <- compare_NAworst %>% 
+        rename(WIS=meanWIS,
+               Rank=meanRank,
+               Shapley.eq = meanImpScore_shapley_eq,
+               Shapley.wt = meanImpScore_shapley_wt,
+               LOMO.eq = meanImpScore_lomo_eq,
+               LOMO.wt = meanImpScore_lomo_wt)  
+colnames(tab2)<-c(
+        "Model"," WIS", "relWIS", "Rank",
+        "$\\Phi^{\\text{lasomo}}_{\\text{eq}}$", 
+        "$\\Phi^{\\text{lasomo}}_{\\text{wt}}$", 
+        "$\\Phi^{\\text{lomo}}_{\\text{eq}}$", 
+        "$\\Phi^{\\text{lomo}}_{\\text{wt}}$"
+                  )
+
+xtab2 <- xtable(tab2, digits = c(0,0,1,rep(2,6)), 
+       caption = "Summary of WIS, relative WIS compared to the COVIDhub-baseline, standardized rank score, importance scores ($\\Phi$), sorted by mean WIS. All scores were averaged across all forecast dates, locations, and horizons. In the importance score notation ($\\Phi$), the superscript indicates the algorithm method, and the subscript indicates the ensemble method used. For example, $\\Phi^{\\text{lomo}}_{\\text{wt}}$ represents the mean important score based on leave one model out algorithm with weighted (trained) ensemble and $\\Phi^{\\text{lasomo}}_{\\text{eq}}$ represents the mean important score based on leave all subsets of models out algorithm with equally weighted (untrained) ensemble.  The best value in each column is highlighted in bold.", 
+       align="|r|rccccccc|")
+
+print(xtab2, include.rownames=FALSE, 
+      sanitize.colnames.function=function(x) {x})
+@
+
+
+\section{Simulation Studies} \label{simulation}
+
+\subsection{Relationship between a component forecaster's bias and importance}
+
+
+\begin{figure}[h!]
+	\centering
+<<fig5.simuplot-imp_bias, fig=TRUE, fig.height=4, echo=FALSE>>==
+simdat <- readRDS("../Data/simulation_f3bias.rds")
+
+simdat %>% 
+        dplyr::select(model, f3_bias, importance, dispersion) %>%
+        dplyr::group_by(f3_bias, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_bias, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        labs(x="b (bias of forecaster 3)", y="Importance")
+@
+	\caption{Importance of three forecasters by various biases of forecaster 3. $F_{1,t} = \text{N}(-1, 1)$, $F_{2,t} = \text{N}(-0.5, 1)$, and $F_{3,t} = \text{N}(b, 1)$. Importance scores were calculated and averaged over 1000 replicates of the forecasting experiments conducted at each value of $b$, incremented by 0.05 from $-1$ to $3$. The results are displayed in different line patterns by model (dashed line for forecaster 1, dash-dotted line for forecaster 2, and solid line for forecaster 3). }
+	\label{fig:simuplot-imp_bias}
+\end{figure}
+
+\newpage
+\subsection{Relationship between component forecaster dispersion and importance}
+
+
+\begin{figure}[h!]
+	\centering
+<<fig6.simuplot-imp_dispersion, fig=TRUE, fig.width=8, fig.height=4, echo=FALSE>>==
+simdat <- readRDS("../Data/simulation_f3sharp.rds")
+
+simdat %>% 
+        dplyr::select(model, f3_sharpness, importance, dispersion) %>%
+        dplyr::group_by(f3_sharpness, model) %>%
+        dplyr::summarise(sharpness=mean(dispersion), 
+                           avg_imp=mean(importance), 
+                           "5% qt"=quantile(importance, probs = 0.05), 
+                           #"50% qt"=quantile(importance, probs = 0.50),
+                           "95% qt"=quantile(importance, probs = 0.95), 
+                         .groups = 'drop') %>% 
+        ggplot(aes(x=f3_sharpness, y =avg_imp, group=model)) +
+        geom_line(aes(linetype=model)) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        labs(x="s (standard deviation of forecaster 3)",
+             #title="Importance of three forecasters by different dispersion of forecaster 3", 
+             y="Importance") 
+@
+	\caption{Importance of three forecasters as a function of dispersion of forecaster 3. $F_{1,t} = \text{N}(0, 0.5^2)$, $F_{2,t} = \text{N}(0, 0.7^2)$, and $F_{3,t} = \text{N}(0, s^2).$ Importance scores were calculated and averaged over 1000 replicates of the forecasting experiments conducted at each value of $s$, incremented by 0.05 from $0.1$ to $3$. The results are displayed in different line patterns by model (dashed line for forecaster 1, dash-dotted line for forecaster 2, and solid line for forecaster 3).}
+	\label{fig:simuplot-imp_dispersion}
+\end{figure}
+
+
+
+\end{document}

@@ -13,9 +13,9 @@ library(dplyr)
 library(lubridate)
 library(stringr)
 library(ggplot2)
+library(ggrepel)
 # install.packages("ggridges")
 library(ggridges)
-library(ggrepel)
 library(ggpubr)
 library(gridExtra)
 library(grid)
@@ -29,7 +29,6 @@ library(pander)
 library(kableExtra)
 library(ggprism)
 library(patchwork)
-library(stringr)
 # get_all_models()
 # datatable(fdat)
 library(here)
@@ -134,19 +133,25 @@ This plot shows that there is an inaccurate but important model because, while t
 That bias, in this situation, therefore made this model an “important” counter-weight to all of the other models.
 
 ```{r}
-require("ggrepel")
-
-p.imp_wis.1225 <- forecast_ma2021_full.v2 %>%
-        filter(target_end_date == "2021-12-25") %>%
+dat <- forecast_ma2021 %>% 
         filter(!grepl('Ens', model)) %>% 
-        ggplot(aes(x=wis, y = importance, color=model_order)) + 
-        geom_point(size = 2.5) + 
-        scale_color_manual(values=col_vector) +
+        filter(target_end_date == "2021-12-25")
+p.imp_wis.1225 <- dat %>% 
+        ggplot(aes(x=wis, y = importance)) + 
+        geom_point(shape=21, fill = "black", color="black", size=3) + 
+        geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
+                         aes(label = model),
+                        size = 5,
+                         nudge_x = -32,
+                         nudge_y = -2,
+                         box.padding = 0.5,
+                         point.padding = 0.5,
+                         arrow = arrow(length = unit(0.03, "npc"))) + 
         xlim(0,130) + 
         labs(y = "Importance",
              x = "WIS") + 
-        theme(axis.text=element_text(size=12),
-              axis.title=element_text(face = "bold"),
+        theme(axis.text=element_text(size=14),
+              axis.title=element_text(size=16),
               legend.position="none")
 
 
@@ -160,16 +165,21 @@ dev.off()
 # Scatterplots of importance vs. WIS by model
 
 ```{r plot_importance-vs-wis-by-model, fig.pos='h', fig.cap="left-aligned"}
-p <- forecast_ma2021 %>% 
+dat <- forecast_ma2021 %>% 
   filter(!grepl('Ens', model)) %>% 
-  mutate(target_end_date=str_remove(target_end_date, "2021-")) %>% 
-  ggplot(aes(x=wis)) + 
-  geom_point(aes(y = importance)) +
-  facet_wrap(~ model) + 
-  labs(#title = "Model importance vs. WIS by Model",
-          x = "WIS",
-          y = "Importance") + 
-  theme(legend.position = "none")
+  mutate(target_end_date=str_remove(target_end_date, "2021-")) 
+p <- dat %>% 
+        ggplot(aes(x=wis, y= importance)) +
+        geom_point(shape=24, color = "grey57", size=2) +
+        geom_point(data = dat %>% filter(target_end_date == "12-25"), 
+                   shape=21, fill = "black", color="black", size=2.5) +
+        facet_wrap(~ model) +
+        labs(#title = "Model importance vs. WIS by Model",
+                x = "WIS",
+                y = "Importance") + 
+        theme(axis.text=element_text(size=10),
+              axis.title=element_text(size=16),
+              legend.position = "none")
 
 pdf(file="../Plot/scatterplot-wis_imp2021.pdf",
     width = 10,
