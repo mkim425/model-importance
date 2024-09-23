@@ -38,7 +38,7 @@ forcasts_3mod <- forecasts_MA_2021 %>%
 
 
 ```{r}
-ggplot(forcasts_3mod, aes(x = target_end_date)) +
+p <- ggplot(forcasts_3mod, aes(x = target_end_date)) +
         facet_grid(~model) +
         geom_point(aes(y = value, color = "medians"), size=2) +
         geom_line(aes(y = value, color = "medians"), linewidth=1) +
@@ -77,5 +77,13 @@ ggplot(forcasts_3mod, aes(x = target_end_date)) +
               legend.direction = "vertical", 
               legend.box = "horizontal")
 
+```
+
+```{r}
+pdf(file="../Plot/plot-motivation.pdf",
+    width = 10,
+    height = 5)
+p
+dev.off()
 ```
 
