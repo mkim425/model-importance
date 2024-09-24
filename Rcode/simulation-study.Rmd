@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(dplyr)
 library(ggplot2)
 theme_set(theme_bw())
+library(ggpubr)
 library(here)
 setwd(here())
 ```
@@ -16,11 +17,12 @@ setwd(here())
 
 ```{r}
 dat <- readRDS("../Data/simulation_f3pts.rds")
-dat %>% 
+p1 <- dat %>% 
     ggplot(aes(x=f3_pred, y =Importance_score, group=Model)) +
     geom_line(aes(linetype=Model)) +
     scale_linetype_manual(values=c("dashed","twodash", "solid")) +
-    labs(x="b (prediction of forecaster 3)", y="Importance")
+    labs(x="b (prediction of forecaster 3)", y="Importance", title = "(a)") +
+    theme(legend.position = "bottom")
 ```
 
 
@@ -29,21 +31,31 @@ dat %>%
 ```{r plot_imp_bias}
 simdat <- readRDS("../Data/simulation_f3bias.rds")
 
-simdat %>% 
-        dplyr::select(model, f3_bias, importance, dispersion) %>%
-        dplyr::group_by(f3_bias, model) %>%
+p2 <- simdat %>% rename(Model = model) %>% 
+        dplyr::select(Model, f3_bias, importance, dispersion) %>%
+        dplyr::group_by(f3_bias, Model) %>%
         dplyr::summarise(sharpness=mean(dispersion), 
                            avg_imp=mean(importance), 
                            "5% qt"=quantile(importance, probs = 0.05), 
                            #"50% qt"=quantile(importance, probs = 0.50),
                            "95% qt"=quantile(importance, probs = 0.95), 
                          .groups = 'drop') %>% 
-        ggplot(aes(x=f3_bias, y =avg_imp, group=model)) +
-        geom_line(aes(linetype=model)) +
+        ggplot(aes(x=f3_bias, y =avg_imp, group=Model)) +
+        geom_line(aes(linetype=Model)) +
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
-        labs(x="b (bias of forecaster 3)", y="Importance")
+        labs(x="b (bias of forecaster 3)", y="Importance", title = "(b)") +
+        theme(legend.position = "bottom")
 ```
 
+
+```{r}
+p <- ggarrange(p1, p2, ncol = 2, common.legend = TRUE, legend = "bottom")
+pdf(file="../Plot/plot-simulation-settingA.pdf",
+    width = 10,
+    height = 5)
+p
+dev.off()
+```
 
 
 ## Association between component forecaster dispersion and importance
@@ -51,7 +63,7 @@ simdat %>%
 ```{r plot_imp_dispersion}
 simdat <- readRDS("../Data/simulation_f3sharp.rds")
 
-simdat %>% 
+p3 <- simdat %>% 
         dplyr::select(model, f3_sharpness, importance, dispersion) %>%
         dplyr::group_by(f3_sharpness, model) %>%
         dplyr::summarise(sharpness=mean(dispersion), 
