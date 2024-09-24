@@ -48,6 +48,37 @@ forecast_ma2021 <- forecast_ma2021_full %>%
          dispersion, overpred, underpred, f.median) 
 ```
 
+
+# Scatterplots of importance vs. WIS by model
+
+```{r plot_importance-vs-wis-by-model, fig.pos='h', fig.cap="left-aligned"}
+dat <- forecast_ma2021 %>% 
+  filter(!grepl('Ens', model)) %>% 
+  mutate(target_end_date=str_remove(target_end_date, "2021-")) 
+p <- dat %>% 
+        ggplot(aes(x=wis, y= importance)) +
+        geom_hline(yintercept = 0, linetype="dashed", 
+                      size=0.5, colour="black") +
+        geom_point(shape=24, color = "grey57", size=2) +
+        geom_point(data = dat %>% filter(target_end_date == "12-25"), 
+                   shape=21, fill = "black", color="black", size=2.5)  +
+        facet_wrap(~ model) +
+        labs(#title = "Model importance vs. WIS by Model",
+                x = "WIS",
+                y = "Importance") + 
+        theme(axis.text=element_text(size=10),
+              axis.title=element_text(size=16),
+              legend.position = "none",
+              strip.text = element_text(size = 10))
+
+pdf(file="../Plot/scatterplot-wis_imp2021.pdf",
+    width = 10,
+    height = 5)
+p
+dev.off()
+```
+
+
 # Plot of prediction intervals of 9 models and ensembles constructed by leave-one-model-out algorithm
 
 ```{r}
@@ -162,31 +193,7 @@ p.imp_wis.1225
 dev.off()
 ```
 
-# Scatterplots of importance vs. WIS by model
 
-```{r plot_importance-vs-wis-by-model, fig.pos='h', fig.cap="left-aligned"}
-dat <- forecast_ma2021 %>% 
-  filter(!grepl('Ens', model)) %>% 
-  mutate(target_end_date=str_remove(target_end_date, "2021-")) 
-p <- dat %>% 
-        ggplot(aes(x=wis, y= importance)) +
-        geom_point(shape=24, color = "grey57", size=2) +
-        geom_point(data = dat %>% filter(target_end_date == "12-25"), 
-                   shape=21, fill = "black", color="black", size=2.5) +
-        facet_wrap(~ model) +
-        labs(#title = "Model importance vs. WIS by Model",
-                x = "WIS",
-                y = "Importance") + 
-        theme(axis.text=element_text(size=10),
-              axis.title=element_text(size=16),
-              legend.position = "none")
-
-pdf(file="../Plot/scatterplot-wis_imp2021.pdf",
-    width = 10,
-    height = 5)
-p
-dev.off()
-```
 
 
 
