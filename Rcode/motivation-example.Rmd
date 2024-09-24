@@ -80,7 +80,7 @@ p <- ggplot(forcasts_3mod, aes(x = target_end_date)) +
 ```
 
 ```{r}
-pdf(file="../Plot/plot-motivation.pdf",
+pdf(file="../Plot/plot-motivating-example.pdf",
     width = 10,
     height = 5)
 p
