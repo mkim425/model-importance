@@ -238,16 +238,7 @@ p.pairs.NAdrop
 dev.off()
 ```
 
-# Association between a component forecaster's point prediction and importance 
 
-```{r}
-dat <- readRDS("../Data/simulation_f3pts.rds")
-dat %>% 
-    ggplot(aes(x=f3_pred, y =Importance_score, group=Model)) +
-    geom_line(aes(linetype=Model)) +
-    scale_linetype_manual(values=c("dashed","twodash", "solid")) +
-    labs(x="b (prediction of forecaster 3)", y="Importance")
-```
 
 
 
