@@ -98,8 +98,8 @@ p.imp_wis.1225 <- dat %>%
         xlim(0,130) + 
         labs(y = "Importance",
              x = "WIS") + 
-        theme(axis.text=element_text(size=14),
-              axis.title=element_text(size=16),
+        theme(axis.text=element_text(size=16),
+              axis.title=element_text(size=20),
               legend.position="none")
 
 
@@ -145,9 +145,9 @@ p1 <- d[c(1:9), ] %>%
              y="Model") + 
         theme(axis.text.x = element_text(size=8, angle = 30, hjust = 0.85),
               legend.position = "none") +
-        theme(axis.title.x = element_text(size = 14),
+        theme(axis.title.x = element_text(size = 13),
               axis.text.x = element_text(size = 8),
-              axis.title.y = element_text(size = 14)) +
+              axis.title.y = element_text(size = 13)) +
         theme(text = element_text(size = 10)) + coord_flip() 
 
 ```
