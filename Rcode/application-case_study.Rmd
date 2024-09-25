@@ -7,14 +7,12 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-# knitr::opts_chunk$set(fig.width=10, fig.height=8) 
 library(covidHubUtils)
 library(dplyr)
 library(lubridate)
 library(stringr)
 library(ggplot2)
 library(ggrepel)
-# install.packages("ggridges")
 library(ggridges)
 library(ggpubr)
 library(gridExtra)
@@ -29,8 +27,6 @@ library(pander)
 library(kableExtra)
 library(ggprism)
 library(patchwork)
-# get_all_models()
-# datatable(fdat)
 library(here)
 setwd(here())
 ```
@@ -79,85 +75,6 @@ dev.off()
 ```
 
 
-# Plot of prediction intervals of 9 models and ensembles constructed by leave-one-model-out algorithm
-
-```{r}
-truth.ma.2021 <- read_csv("../Data/truth_MA_2021.csv") %>% 
-  select(target_end_date, value) %>% 
-  rename(truth = value)
-
-y.val= truth.ma.2021$truth[truth.ma.2021$target_end_date == "2021-12-25"] 
-
-# lock in factor level order
-forecast_ma2021_full.v2 <- forecast_ma2021_full %>% 
-  mutate(model_order = factor(model, levels = unique(model))) %>% 
-  relocate(model_order)
-
-d <- forecast_ma2021_full.v2 %>% 
-        filter(target_end_date == "2021-12-25") %>% 
-        select(model_order, 8:30)
-level <- d$model_order[c(11:19, 10)]
-d1 <- d[c(10, 1:9), ]
-d2 <- d[c(10:19), ]
-
-# Prediction intervals of single models
-p1 <- d[c(1:9), ] %>% 
-        ggplot(aes(y = model_order)) + 
-        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
-        geom_point(aes(x = X0.5 ) ) + 
-        scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
-        geom_vline(xintercept = y.val, linetype="dashed", 
-                      size=0.5, colour="darkred") +
-        labs(x="Value", y="Model", title="95% Prediction Intervals of Individual Forecasts") + 
-        theme(axis.text.x = element_text(size=8, angle = 30, hjust = 1),
-              legend.position = "none") +
-        theme(axis.title.x = element_blank(),
-              axis.text.x = element_text(size = 10),
-              axis.title.y = element_text(size = 16)) +
-        theme(text = element_text(size = 12)) + coord_flip() 
-
-
-# Prediction intervals of ensemble models
-
-d2.copy <- d2 %>% mutate(model_rename = model_order) %>% relocate(model_rename)
-d2.copy$model_rename <- str_remove(d2.copy$model_rename, pattern = "Ens.wo.")
-model_level <- d2.copy$model_rename[c(2:10, 1)]
-breaks2 <- c(seq(0, 700, by=100))
-labels2 <- as.character(breaks2)
-
-p2 <- d2.copy %>%
-        mutate(name = factor(model_rename, levels=model_level)) %>% 
-        relocate(name) %>% 
-        ggplot(aes(y = name)) + 
-        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
-        geom_point(aes(x = X0.5 ) ) +
-        scale_x_continuous(limits = c(-10, 500), breaks = breaks2, labels = labels2) +
-        scale_y_discrete(labels = function(x) str_wrap(x, width = 9)) +
-        geom_vline(xintercept = y.val, linetype="dashed", 
-                      size=0.5, colour="darkred") +
-        labs(x="Value", y="Model", title="95% Prediction Intervals of Ensembles Built Excluding a Single Model") + 
-        theme(axis.text.x = element_text(size=8, angle = 30, hjust = 1),
-              legend.position = "none") +
-        theme(axis.title.x = element_text(size = 16),
-              axis.text.x = element_text(size = 10)) +
-        theme(text = element_text(size = 12))  + coord_flip()   
-```
-
-```{r}
-pdf(file="../Plot/95PI1.pdf",
-    width = 6,
-    height = 3)
-p1
-dev.off()
-```
-```{r}
-pdf(file="../Plot/95PI2.pdf",
-    width = 8,
-    height = 4)
-p2
-dev.off()
-```
-
 # Plot of Importance vs. WIS on 2021-12-25 
  
 This plot shows that there is an inaccurate but important model because, while this model had a large positive bias, it was the only model that was biased in that direction on this particular week.
@@ -192,6 +109,98 @@ pdf(file="../Plot/plot-wis_imp_20211225.pdf",
 p.imp_wis.1225 
 dev.off()
 ```
+
+
+# Plot of prediction intervals of 9 models and ensembles constructed by leave-one-model-out algorithm
+
+```{r}
+truth.ma.2021 <- read_csv("../Data/truth_MA_2021.csv") %>% 
+  select(target_end_date, value) %>% 
+  rename(truth = value)
+
+y.val= truth.ma.2021$truth[truth.ma.2021$target_end_date == "2021-12-25"] 
+
+# lock in factor level order
+forecast_ma2021_full.v2 <- forecast_ma2021_full %>% 
+  mutate(model_order = factor(model, levels = unique(model))) %>% 
+  relocate(model_order)
+
+d <- forecast_ma2021_full.v2 %>% 
+        filter(target_end_date == "2021-12-25") %>% 
+        select(model_order, 8:30) 
+model_sorted <- dat %>% arrange(desc(importance)) %>% select(model)
+d1 <- d[c(10, 1:9), ]
+d2 <- d[c(10:19), ]
+
+# Prediction intervals of single models
+p1 <- d[c(1:9), ] %>%  
+        ggplot(aes(y = factor(model_order, levels = model_sorted$model))) + 
+        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
+        geom_point(aes(x = X0.5 ) ) + 
+        scale_y_discrete(labels = function(x, ...) gsub('-', '\n-', x)) +
+        geom_vline(xintercept = y.val, linetype="dashed", 
+                      size=0.5, colour="darkred") +
+        labs(x="Value",
+             title="95% Prediction Intervals of Individual Forecasts", 
+             y="Model") + 
+        theme(axis.text.x = element_text(size=8, angle = 30, hjust = 0.85),
+              legend.position = "none") +
+        theme(axis.title.x = element_text(size = 14),
+              axis.text.x = element_text(size = 8),
+              axis.title.y = element_text(size = 14)) +
+        theme(text = element_text(size = 10)) + coord_flip() 
+
+```
+
+```{r}
+pdf(file="../Plot/95PI1.pdf",
+    width = 6,
+    height = 3)
+p1
+dev.off()
+```
+
+```{r}
+# Prediction intervals of ensemble models
+
+d2.copy <- d2 %>% mutate(model_renamed = model_order) %>% relocate(model_renamed)
+d2.copy$model_renamed <- str_remove(d2.copy$model_renamed, pattern = "Ens.wo.")
+d2.copy <- d2.copy %>% 
+        mutate( model_renamed = str_replace(model_renamed, 
+                                            "Ensemble.all", 
+                                            "None-(ensemble of all)"))
+extended_model_sorted <- c(model_sorted$model, "None-(ensemble of all)")
+breaks2 <- c(seq(0, 700, by=100))
+labels2 <- as.character(breaks2)
+
+p2 <- d2.copy %>%
+        ggplot(aes(y = factor(model_renamed, levels = extended_model_sorted))) +
+        geom_dumbbell(aes(x = X0.025, xend = X0.975)) +
+        geom_point(aes(x = X0.5 ) ) +
+        scale_x_continuous(limits = c(-10, 500), breaks = breaks2, labels = labels2) +
+        scale_y_discrete(labels = function(x, ...) gsub('-', '\n-', x)) +
+        geom_vline(xintercept = y.val, linetype="dashed", 
+                      size=0.5, colour="darkred") +
+        labs(x="Value", y="Left-out model", 
+             title="95% Prediction Intervals of Ensembles Built Leaving One Model Out") + 
+        theme(axis.text.x = element_text(size=8, angle = 30, hjust = 0.85),
+              legend.position = "none") +
+        theme(axis.title.x = element_text(size = 16),
+              axis.text.x = element_text(size = 10),
+              axis.title.y = element_text(size = 16)) +
+        theme(text = element_text(size = 12))  + coord_flip()   
+```
+
+
+```{r}
+pdf(file="../Plot/95PI2.pdf",
+    width = 8,
+    height = 4)
+p2
+dev.off()
+```
+
+
 
 
 
