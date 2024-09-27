@@ -164,18 +164,20 @@ colnames <- c(paste0("-WIS"), paste0("Rank"),
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
 p.pairs <- ggpairs(
-  d_NAworst %>% select(c(2,5:9)),
-  columnLabels = colnames,
-  labeller = "label_parsed"
-) + theme(axis.text.x=element_text(angle = 90, vjust = -0.01))
+        d_NAworst %>% select(c(2,5:9)),
+        columnLabels = colnames,
+        labeller = "label_parsed"
+        ) + 
+        theme(axis.text.x=element_text(angle = 90, vjust = -0.01),
+              strip.text = element_text(size = 12))
 
 p.pairs 
 
-# pdf(file="../Plot/plot-corr-NAworst.pdf", 
-#     width = 10,
-#     height = 5)
-# p.pairs
-# dev.off()
+pdf(file="../Plot/plot-corr-NAworst.pdf",
+    width = 10,
+    height = 5)
+p.pairs
+dev.off()
 ```
 
 
