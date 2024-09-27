@@ -110,7 +110,7 @@ d_NAdrop <- compare_NAdrop %>%
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
 
-colnames <- c(paste0("-WIS"), paste0("Rank"), 
+colnames <- c(paste0("-WIS"), paste0("Std.rank"), 
               "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
@@ -222,7 +222,7 @@ d_NAavg <- compare_NAavg %>%
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
 
-colnames <- c(paste0("-WIS"), paste0("Rank"), 
+colnames <- c(paste0("-WIS"), paste0("Std.rank"), 
               "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
