@@ -63,7 +63,7 @@ p <- dat %>%
                 x = "WIS",
                 y = "Importance") + 
         theme(axis.text=element_text(size=10),
-              axis.title=element_text(size=16),
+              axis.title=element_text(size=14),
               legend.position = "none",
               strip.text = element_text(size = 10))
 
