@@ -22,7 +22,12 @@ p1 <- dat %>%
     geom_line(aes(linetype=Model)) +
     scale_linetype_manual(values=c("dashed","twodash", "solid")) +
     labs(x="b (prediction of forecaster 3)", y="Importance", title = "(a)") +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") + 
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=14),
+          strip.text = element_text(size = 12),
+          legend.title = element_text(size=14),
+          legend.text = element_text(size=14))
 ```
 
 
@@ -44,7 +49,12 @@ p2 <- simdat %>% rename(Model = model) %>%
         geom_line(aes(linetype=Model)) +
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="b (bias of forecaster 3)", y="Importance", title = "(b)") +
-        theme(legend.position = "bottom")
+        theme(legend.position = "bottom") + 
+        theme(axis.text=element_text(size=12),
+              axis.title=element_text(size=14),
+              strip.text = element_text(size = 12),
+              legend.title = element_text(size=14),
+              legend.text = element_text(size=14))
 ```
 
 
@@ -77,7 +87,12 @@ p3 <- simdat %>% rename(Model = model) %>%
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="s (standard deviation of forecaster 3)",
              #title="Importance of three forecasters by different dispersion of forecaster 3", 
-             y="Importance") 
+             y="Importance") + 
+        theme(axis.text=element_text(size=12),
+              axis.title=element_text(size=14),
+              strip.text = element_text(size = 12),
+              legend.title = element_text(size=14),
+              legend.text = element_text(size=14))
 ```
 
 ```{r}
