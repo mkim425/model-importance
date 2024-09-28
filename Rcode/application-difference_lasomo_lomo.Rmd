@@ -180,7 +180,179 @@ p.pairs
 dev.off()
 ```
 
+# Plot to illustrate the rank changes
 
+```{r}
+library(ggbump)
+
+df_rank <- compare_NAworst %>%
+        mutate(WIS_rank = rank(meanWIS), 
+               lasomo_eq_rank = rank(-meanImpScore_shapley_eq),
+               lasomo_wt_rank = rank(-meanImpScore_shapley_wt),
+               lomo_eq_rank = rank(-meanImpScore_lomo_eq),
+               lomo_wt_rank = rank(-meanImpScore_lomo_wt)) %>% 
+        select(model, WIS_rank, lasomo_eq_rank, lasomo_wt_rank, lomo_eq_rank, lomo_wt_rank) 
+
+# Plot: WIS vs. Phi[eq]^{lasomo}
+rank_lasomo_eq <- df_rank %>% 
+        mutate(line_type = case_when(
+                                WIS_rank < lasomo_eq_rank ~ "twodash",
+                                WIS_rank > lasomo_eq_rank ~ "dotted",
+                                TRUE ~ "solid"
+                                )
+               ) %>%
+        select(model, WIS_rank, lasomo_eq_rank, line_type) %>%
+        pivot_longer(cols = c(WIS_rank, lasomo_eq_rank), 
+                     names_to = "Metric", 
+                     values_to = "Rank") %>% 
+        ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
+        geom_bump(linewidth=2) +
+        geom_point(size=0, alpha = 0.1) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lasomo}))) +
+        scale_y_continuous(trans="reverse", breaks = 1:10) +
+        # Add labels for each line at the last point
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "lasomo_eq_rank"),  # Place label at the last point
+                  hjust = 0,  
+                  size = 5)   +
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
+                  hjust = 1,  
+                  size = 5)   +
+        labs(title = bquote("(a) WIS vs. " * Phi[eq]^{lasomo}),
+             x = "") +
+        theme(legend.position = "none",
+              axis.title = element_text(size = 20),
+              axis.text.x = element_text(size = 18),
+              axis.text.y = element_text(size = 16),
+              plot.title = element_text(size=20)) 
+ 
+# Plot: WIS vs. Phi[wt]^{lasomo}
+rank_lasomo_wt <- df_rank %>% 
+        mutate(line_type = case_when(
+                                WIS_rank < lasomo_wt_rank ~ "twodash",
+                                WIS_rank > lasomo_wt_rank ~ "dotted",
+                                TRUE ~ "solid"
+                                )
+               ) %>%
+        select(model, WIS_rank, lasomo_wt_rank, line_type) %>%
+        pivot_longer(cols = c(WIS_rank, lasomo_wt_rank), 
+                     names_to = "Metric", 
+                     values_to = "Rank") %>% 
+        ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
+        geom_bump(linewidth=2) +
+        geom_point(size=0, alpha = 0.1) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lasomo}))) +
+        scale_y_continuous(trans="reverse", breaks = 1:10) +
+        # Add labels for each line at the last point
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "lasomo_wt_rank"),  # Place label at the last point
+                  hjust = 0,  
+                  size = 5)   +
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
+                  hjust = 1,  
+                  size = 5)   +
+        labs(title = bquote("(b) WIS vs. " * Phi[wt]^{lasomo}),
+             x = "", y="") +
+        theme(legend.position = "none",
+              axis.title = element_text(size = 20),
+              axis.text.x = element_text(size = 18),
+              axis.text.y = element_text(size = 16),
+              plot.title = element_text(size=20))      
+
+# Plot: WIS vs. Phi[eq]^{lomo}
+rank_lomo_eq <- df_rank %>% 
+        mutate(line_type = case_when(
+                                WIS_rank < lomo_eq_rank ~ "twodash",
+                                WIS_rank > lomo_eq_rank ~ "dotted",
+                                TRUE ~ "solid"
+                                )
+               ) %>%
+        select(model, WIS_rank, lomo_eq_rank, line_type) %>%
+        pivot_longer(cols = c(WIS_rank, lomo_eq_rank), 
+                     names_to = "Metric", 
+                     values_to = "Rank") %>% 
+        ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
+        geom_bump(linewidth=2) +
+        geom_point(size=0, alpha = 0.1) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lomo}))) +
+        scale_y_continuous(trans="reverse", breaks = 1:10) +
+        # Add labels for each line at the last point
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "lomo_eq_rank"),  # Place label at the last point
+                  hjust = 0,  
+                  size = 5)   +
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
+                  hjust = 1,  
+                  size = 5)   +
+        labs(title = bquote("(c) WIS vs. " * Phi[eq]^{lomo})) +
+        theme(legend.position = "none",
+              axis.title = element_text(size = 20),
+              axis.text.x = element_text(size = 18),
+              axis.text.y = element_text(size = 16),
+              plot.title = element_text(size=20)) 
+
+# Plot: WIS vs. Phi[wt]^{lomo}
+rank_lomo_wt <- df_rank %>% 
+        mutate(line_type = case_when(
+                                WIS_rank < lomo_wt_rank ~ "twodash",
+                                WIS_rank > lomo_wt_rank ~ "dotted",
+                                TRUE ~ "solid"
+                                )
+               ) %>%
+        select(model, WIS_rank, lomo_wt_rank, line_type) %>%
+        pivot_longer(cols = c(WIS_rank, lomo_wt_rank), 
+                     names_to = "Metric", 
+                     values_to = "Rank") %>% 
+        ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
+        geom_bump(linewidth=2) +
+        geom_point(size=0, alpha = 0.1) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lomo}))) +
+        scale_y_continuous(trans="reverse", breaks = 1:10) +
+        # Add labels for each line at the last point
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "lomo_wt_rank"),  # Place label at the last point
+                  hjust = 0,  
+                  size = 5)   +
+        geom_text(aes(label = model), 
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
+                  hjust = 1,  
+                  size = 5)   +
+        labs(title = bquote(bold("(d) WIS vs. " * Phi[wt]^{lomo})), y=" ") +
+        theme(legend.position = "none",
+              axis.title = element_text(size = 20),
+              axis.text.x = element_text(size = 18),
+              axis.text.y = element_text(size = 16),
+              plot.title = element_text(size=20)) 
+```
+
+```{r}
+pdf(file="../Plot/rank-changes-lasomo-eq-NAworst.pdf",
+    width = 10,
+    height = 8)
+rank_lasomo_eq
+dev.off()
+
+pdf(file="../Plot/rank-changes-lasomo-wt-NAworst.pdf",
+    width = 10,
+    height = 8)
+rank_lasomo_wt
+dev.off()
+
+pdf(file="../Plot/rank-changes-lomo-eq-NAworst.pdf",
+    width = 10,
+    height = 8)
+rank_lomo_eq
+dev.off()
+
+pdf(file="../Plot/rank-changes-lomo-wt-NAworst.pdf",
+    width = 10,
+    height = 8)
+rank_lomo_wt
+dev.off()
+```
 
 
 
