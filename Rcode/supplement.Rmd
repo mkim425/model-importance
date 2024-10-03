@@ -111,12 +111,12 @@ d_NAdrop <- compare_NAdrop %>%
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
 
-colnames <- c(paste0("-WIS"), paste0("Std.rank"), 
+colnames <- c(paste0("-WIS"), # paste0("Std.rank"), 
               "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
 p.pairs.NAdrop <- ggpairs(
-        d_NAdrop %>% select(c(2,5:9)),
+        d_NAdrop %>% select(c(2,6:9)),
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
@@ -409,12 +409,12 @@ d_NAavg <- compare_NAavg %>%
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
 
-colnames <- c(paste0("-WIS"), paste0("Std.rank"), 
+colnames <- c(paste0("-WIS"), #paste0("Std.rank"), 
               "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
 p.pairs.NAavg <- ggpairs(
-        d_NAavg %>% select(c(2,5:9)),
+        d_NAavg %>% select(c(2,6:9)),
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
