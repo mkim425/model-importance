@@ -168,8 +168,9 @@ p.pairs <- ggpairs(
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
-        theme(axis.text.x=element_text(angle = 90, vjust = -0.01),
-              strip.text = element_text(size = 12))
+        theme(axis.text.x=element_text(angle = 45, vjust = 0.75, hjust=0.75),
+              strip.text = element_text(size = 14),
+              panel.spacing = unit(0.65, "lines"))
 
 p.pairs 
 
