@@ -159,12 +159,12 @@ d_NAworst <- compare_NAworst %>%
         mutate(neg_WIS=-meanWIS) %>% 
         relocate(neg_WIS, .after=model) 
 
-colnames <- c(paste0("-WIS"), paste0("Std.rank"), 
+colnames <- c(paste0("-WIS"), #paste0("Std.rank"), 
               "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
               "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
 
 p.pairs <- ggpairs(
-        d_NAworst %>% select(c(2,5:9)),
+        d_NAworst %>% select(c(2,6:9)),
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
