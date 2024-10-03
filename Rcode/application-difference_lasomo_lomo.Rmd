@@ -208,24 +208,28 @@ rank_lasomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lasomo}))) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lasomo})),
+                         expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        # Add labels for each line at the last point
+        labs(title = bquote(bold("(a) WIS vs. " * Phi[eq]^{lasomo})),
+             x = "") +
+        # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lasomo_eq_rank"),  # Place label at the last point
-                  hjust = 0,  
-                  size = 5)   +
+                  hjust = "left",  
+                  nudge_x = 0.03,
+                  size = 6 )   +
         geom_text(aes(label = model), 
-                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
-                  hjust = 1,  
-                  size = 5)   +
-        labs(title = bquote("(a) WIS vs. " * Phi[eq]^{lasomo}),
-             x = "") +
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the starting point
+                  hjust = "right", 
+                  nudge_x = -0.03,
+                  size = 6)   +
+        theme_bw() +
         theme(legend.position = "none",
-              axis.title = element_text(size = 20),
-              axis.text.x = element_text(size = 18),
-              axis.text.y = element_text(size = 16),
-              plot.title = element_text(size=20)) 
+              axis.title = element_text(size = 22),
+              axis.text.x = element_text(size = 22),
+              axis.text.y = element_text(size = 18),
+              plot.title = element_text(size=23)) 
  
 # Plot: WIS vs. Phi[wt]^{lasomo}
 rank_lasomo_wt <- df_rank %>% 
@@ -242,24 +246,28 @@ rank_lasomo_wt <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lasomo}))) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lasomo})),
+                         expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        # Add labels for each line at the last point
+        labs(title = bquote(bold("(b) WIS vs. " * Phi[wt]^{lasomo})),
+             x = "", y="") +
+        # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lasomo_wt_rank"),  # Place label at the last point
-                  hjust = 0,  
-                  size = 5)   +
+                  hjust = "left",  
+                  nudge_x = 0.03,
+                  size = 6 )   +
         geom_text(aes(label = model), 
-                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
-                  hjust = 1,  
-                  size = 5)   +
-        labs(title = bquote("(b) WIS vs. " * Phi[wt]^{lasomo}),
-             x = "", y="") +
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the starting point
+                  hjust = "right", 
+                  nudge_x = -0.03,
+                  size = 6)   +
+        theme_bw() +
         theme(legend.position = "none",
-              axis.title = element_text(size = 20),
-              axis.text.x = element_text(size = 18),
-              axis.text.y = element_text(size = 16),
-              plot.title = element_text(size=20))      
+              axis.title = element_text(size = 22),
+              axis.text.x = element_text(size = 22),
+              axis.text.y = element_text(size = 18),
+              plot.title = element_text(size=23))       
 
 # Plot: WIS vs. Phi[eq]^{lomo}
 rank_lomo_eq <- df_rank %>% 
@@ -276,23 +284,27 @@ rank_lomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lomo}))) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[eq]^{lomo})),
+                         expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        # Add labels for each line at the last point
+        labs(title = bquote(bold("(c) WIS vs. " * Phi[eq]^{lomo}))) +
+        # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lomo_eq_rank"),  # Place label at the last point
-                  hjust = 0,  
-                  size = 5)   +
+                  hjust = "left",  
+                  nudge_x = 0.03,
+                  size = 6 )   +
         geom_text(aes(label = model), 
-                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
-                  hjust = 1,  
-                  size = 5)   +
-        labs(title = bquote("(c) WIS vs. " * Phi[eq]^{lomo})) +
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the starting point
+                  hjust = "right", 
+                  nudge_x = -0.03,
+                  size = 6)   +
+        theme_bw() +
         theme(legend.position = "none",
-              axis.title = element_text(size = 20),
-              axis.text.x = element_text(size = 18),
-              axis.text.y = element_text(size = 16),
-              plot.title = element_text(size=20)) 
+              axis.title = element_text(size = 22),
+              axis.text.x = element_text(size = 22),
+              axis.text.y = element_text(size = 18),
+              plot.title = element_text(size=23)) 
 
 # Plot: WIS vs. Phi[wt]^{lomo}
 rank_lomo_wt <- df_rank %>% 
@@ -309,23 +321,27 @@ rank_lomo_wt <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lomo}))) +
+        scale_x_discrete(limits = rev, labels = c("WIS", expression(Phi[wt]^{lomo})),
+                         expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        # Add labels for each line at the last point
+        labs(title = bquote(bold("(d) WIS vs. " * Phi[wt]^{lomo})), y=" ") +
+        # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lomo_wt_rank"),  # Place label at the last point
-                  hjust = 0,  
-                  size = 5)   +
+                  hjust = "left",  
+                  nudge_x = 0.03,
+                  size = 6 )   +
         geom_text(aes(label = model), 
-                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the last point
-                  hjust = 1,  
-                  size = 5)   +
-        labs(title = bquote(bold("(d) WIS vs. " * Phi[wt]^{lomo})), y=" ") +
+                  data = . %>% filter(Metric == "WIS_rank"),  # Place label at the starting point
+                  hjust = "right", 
+                  nudge_x = -0.03,
+                  size = 6)   +
+        theme_bw() +
         theme(legend.position = "none",
-              axis.title = element_text(size = 20),
-              axis.text.x = element_text(size = 18),
-              axis.text.y = element_text(size = 16),
-              plot.title = element_text(size=20)) 
+              axis.title = element_text(size = 22),
+              axis.text.x = element_text(size = 22),
+              axis.text.y = element_text(size = 18),
+              plot.title = element_text(size=23)) 
 ```
 
 ```{r}
