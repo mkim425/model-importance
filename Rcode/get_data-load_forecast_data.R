@@ -5,7 +5,7 @@ library(covidHubUtils)
 library(here)
 setwd(here())
 
-dates <- seq.Date(from = as.Date("2020-06-01"), #2020-06-012020-11-02
+dates <- seq.Date(from = as.Date("2020-06-01"), 
                   to = as.Date("2022-11-28"),
                   by = 7) %>%
         as.character()

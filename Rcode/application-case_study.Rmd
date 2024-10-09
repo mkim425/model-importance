@@ -89,7 +89,7 @@ p.imp_wis.1225 <- dat %>%
         geom_point(shape=21, fill = "black", color="black", size=3) + 
         geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
                          aes(label = model),
-                        size = 5,
+                        size = 6,
                          nudge_x = -32,
                          nudge_y = -2,
                          box.padding = 0.5,
@@ -99,11 +99,11 @@ p.imp_wis.1225 <- dat %>%
         labs(y = "Importance",
              x = "WIS") + 
         theme(axis.text=element_text(size=16),
-              axis.title=element_text(size=20),
+              axis.title=element_text(size=22),
               legend.position="none")
 
 
-pdf(file="../Plot/plot-wis_imp_20211225.pdf",
+pdf(file="../Plot/wis_imp_20211225.pdf",
     width = 10,
     height = 5)
 p.imp_wis.1225 

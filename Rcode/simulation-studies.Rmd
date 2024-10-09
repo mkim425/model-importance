@@ -60,7 +60,7 @@ p2 <- simdat %>% rename(Model = model) %>%
 
 ```{r}
 p <- ggarrange(p1, p2, ncol = 2, common.legend = TRUE, legend = "bottom")
-pdf(file="../Plot/plot-simulation-settingA.pdf",
+pdf(file="../Plot/simulation-settingA.pdf",
     width = 10,
     height = 5)
 p
@@ -96,7 +96,7 @@ p3 <- simdat %>% rename(Model = model) %>%
 ```
 
 ```{r}
-pdf(file="../Plot/plot-simulation-settingB.pdf",
+pdf(file="../Plot/simulation-settingB.pdf",
     width = 10,
     height = 5)
 p3

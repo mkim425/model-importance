@@ -126,7 +126,7 @@ p.pairs.NAdrop <- ggpairs(
 
 p.pairs.NAdrop 
 
-pdf(file="../Plot/plot-corr-NAdrop.pdf",
+pdf(file="../Plot/corr-NAdrop.pdf",
     width = 10,
     height = 5)
 p.pairs.NAdrop
@@ -425,7 +425,7 @@ p.pairs.NAavg <- ggpairs(
 
 p.pairs.NAavg 
 
-pdf(file="../Plot/plot-corr-NAavg.pdf",
+pdf(file="../Plot/corr-NAavg.pdf",
     width = 10,
     height = 5)
 p.pairs.NAavg
