@@ -174,7 +174,7 @@ p.pairs <- ggpairs(
 
 p.pairs 
 
-pdf(file="../Plot/plot-corr-NAworst.pdf",
+pdf(file="../Plot/corr-NAworst.pdf",
     width = 10,
     height = 5)
 p.pairs
