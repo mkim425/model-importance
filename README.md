@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Determination of model importance as ensemble member
+# Determination of model importance as an ensemble member
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -9,7 +9,7 @@
 This is the data repository for the following paper:
 
 *Title: Beyond forecast leaderboards: Measuring individual model
-importance based on contribution to probabilistic ensemble accuracy*
+importance based on contribution to ensemble accuracy*
 
 *Authors: Minsu Kim, Evan L. Ray, Nicholas G. Reich*
 
