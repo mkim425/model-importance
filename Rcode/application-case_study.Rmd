@@ -50,9 +50,11 @@ forecast_ma2021 <- forecast_ma2021_full %>%
 ```{r plot_importance-vs-wis-by-model, fig.pos='h', fig.cap="left-aligned"}
 dat <- forecast_ma2021 %>% 
   filter(!grepl('Ens', model)) %>% 
-  mutate(target_end_date=str_remove(target_end_date, "2021-")) 
+  mutate(target_end_date=str_remove(target_end_date, "2021-"),
+         neg_wis = -wis)
+        
 p <- dat %>% 
-        ggplot(aes(x=wis, y= importance)) +
+        ggplot(aes(x=neg_wis, y= importance)) +
         geom_hline(yintercept = 0, linetype="dashed", 
                       size=0.5, colour="black") +
         geom_point(shape=24, color = "grey57", size=2) +
@@ -60,15 +62,15 @@ p <- dat %>%
                    shape=21, fill = "black", color="black", size=2.5)  +
         facet_wrap(~ model) +
         labs(#title = "Model importance vs. WIS by Model",
-                x = "WIS",
-                y = "Importance") + 
+             x = "-WIS",
+             y = "Importance") + 
         theme(axis.text=element_text(size=10),
               axis.title=element_text(size=14),
               legend.position = "none",
               strip.text = element_text(size = 10))
 
 pdf(file="../Plot/scatterplot-wis_imp2021.pdf",
-    width = 10,
+    width = 8,
     height = 5)
 p
 dev.off()
@@ -83,28 +85,29 @@ That bias, in this situation, therefore made this model an “important” count
 ```{r}
 dat <- forecast_ma2021 %>% 
         filter(!grepl('Ens', model)) %>% 
-        filter(target_end_date == "2021-12-25")
+        filter(target_end_date == "2021-12-25") %>% 
+        mutate(neg_wis = -wis)
 p.imp_wis.1225 <- dat %>% 
-        ggplot(aes(x=wis, y = importance)) + 
+        ggplot(aes(x = neg_wis, y = importance)) + 
         geom_point(shape=21, fill = "black", color="black", size=3) + 
         geom_text_repel(data=subset(dat, model == "CovidAnalytics-DELPHI"),
-                         aes(label = model),
+                        aes(label = model),
                         size = 6,
-                         nudge_x = -32,
-                         nudge_y = -2,
-                         box.padding = 0.5,
-                         point.padding = 0.5,
-                         arrow = arrow(length = unit(0.03, "npc"))) + 
-        xlim(0,130) + 
+                        nudge_x = 32,
+                        nudge_y = -2,
+                        box.padding = 0.5,
+                        point.padding = 0.5,
+                        arrow = arrow(length = unit(0.03, "npc"))) + 
+        xlim(-130, 0) + 
         labs(y = "Importance",
-             x = "WIS") + 
+             x = "-WIS") + 
         theme(axis.text=element_text(size=16),
               axis.title=element_text(size=22),
               legend.position="none")
 
 
 pdf(file="../Plot/wis_imp_20211225.pdf",
-    width = 10,
+    width = 8,
     height = 5)
 p.imp_wis.1225 
 dev.off()
