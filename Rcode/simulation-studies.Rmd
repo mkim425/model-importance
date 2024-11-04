@@ -21,8 +21,8 @@ p1 <- dat %>%
     ggplot(aes(x=f3_pred, y =Importance_score, group=Model)) +
     geom_line(aes(linetype=Model)) +
     scale_linetype_manual(values=c("dashed","twodash", "solid")) +
-    labs(x="b (prediction of forecaster 3)", y="Expected  Importance", 
-         title = bquote(bold("(a) Expected Importance based on MSPE"))) +
+    labs(x="b (prediction of forecaster 3)", y="Average  Importance", 
+         title = bquote(bold("(a) Average Importance based on SPE"))) +
     theme(legend.position = "bottom") + 
     theme(axis.text=element_text(size=12),
           axis.title=element_text(size=14),
@@ -49,8 +49,8 @@ p2 <- simdat %>% rename(Model = model) %>%
         ggplot(aes(x=f3_bias, y =avg_imp, group=Model)) +
         geom_line(aes(linetype=Model)) +
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
-        labs(x="b (bias of forecaster 3)", y="Expected  Importance", 
-         title = bquote(bold("(b) Expected Importance based on MWIS"))) +
+        labs(x="b (bias of forecaster 3)", y="Average  Importance", 
+         title = bquote(bold("(b) Average Importance based on WIS"))) +
         theme(legend.position = "bottom") + 
         theme(axis.text=element_text(size=12),
               axis.title=element_text(size=14),
@@ -89,7 +89,7 @@ p3 <- simdat %>% rename(Model = model) %>%
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="s (standard deviation of forecaster 3)",
              #title="Importance of three forecasters by different dispersion of forecaster 3", 
-             y="Expected  Importance") + 
+             y="Average  Importance") + 
         theme(axis.text=element_text(size=12),
               axis.title=element_text(size=14),
               strip.text = element_text(size = 12),
