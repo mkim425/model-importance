@@ -50,6 +50,9 @@ compare_NAdrop <- df_all_scores_extended_NAdrop %>%
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
 
+# saveRDS(compare_NAdrop, "../Data/compare_NAdrop.rds")
+compare_NAdrop <- readRDS("../Data/compare_NAdrop.rds")
+
 compare_NAdrop %>% 
         rename(WIS=meanWIS, 
                Rank=meanRank, 
@@ -344,6 +347,9 @@ compare_NAavg <- df_all_scores_extended_NAavg %>%
         arrange(meanWIS) %>% 
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
+
+# saveRDS(compare_NAavg, "../Data/compare_NAavg.rds")
+compare_NAavg <- readRDS("../Data/compare_NAavg.rds")
 
 compare_NAavg %>% 
         rename(WIS=meanWIS, 
