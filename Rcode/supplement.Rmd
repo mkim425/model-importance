@@ -50,6 +50,9 @@ compare_NAdrop <- df_all_scores_extended_NAdrop %>%
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
 
+# saveRDS(compare_NAdrop, "../Data/compare_NAdrop.rds")
+compare_NAdrop <- readRDS("../Data/compare_NAdrop.rds")
+
 compare_NAdrop %>% 
         rename(WIS=meanWIS, 
                Rank=meanRank, 
@@ -109,19 +112,19 @@ annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) 
 ```{r pairs-plot-NAdrop, message=FALSE}
 d_NAdrop <- compare_NAdrop %>% 
         mutate(neg_WIS=-meanWIS) %>% 
-        relocate(neg_WIS, .after=model) 
+        relocate(neg_WIS, .after=model) %>% 
+        select(model, neg_WIS, meanImpScore_shapley_eq, meanImpScore_lomo_eq)
 
-colnames <- c(paste0("-WIS"), # paste0("Std.rank"), 
-              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
-              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+colnames <- c(paste0("-WIS"),  
+              "Phi^{lasomo}", 
+              "Phi^{lomo}")
 
 p.pairs.NAdrop <- ggpairs(
-        d_NAdrop %>% select(c(2,6:9)),
+        d_NAdrop %>% select(-1),
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
-        theme(axis.text.x=element_text(angle = 45, vjust = 0.75, hjust=0.75),
-              strip.text = element_text(size = 14),
+        theme(strip.text = element_text(size = 14),
               panel.spacing = unit(0.65, "lines"))
 
 p.pairs.NAdrop 
@@ -159,10 +162,10 @@ rank_lasomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi[eq]^{lasomo})),
+        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi^{lasomo})),
                          expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        labs(title = bquote(bold("(a) -WIS vs. " * Phi[eq]^{lasomo})),
+        labs(title = bquote(bold("(a) -WIS vs. " * Phi^{lasomo})),
              x = "") +
         # Add labels for each line
         geom_text(aes(label = model), 
@@ -235,10 +238,10 @@ rank_lomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi[eq]^{lomo})),
+        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi^{lomo})),
                          expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        labs(title = bquote(bold("(c) -WIS vs. " * Phi[eq]^{lomo}))) +
+        labs(title = bquote(bold("(c) -WIS vs. " * Phi^{lomo})), y=" ") +
         # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lomo_eq_rank"),  # Place label at the last point
@@ -345,6 +348,9 @@ compare_NAavg <- df_all_scores_extended_NAavg %>%
         relocate(relWIS, .after = meanWIS) %>% 
         mutate_if(is.numeric, ~round(., 2))
 
+# saveRDS(compare_NAavg, "../Data/compare_NAavg.rds")
+compare_NAavg <- readRDS("../Data/compare_NAavg.rds")
+
 compare_NAavg %>% 
         rename(WIS=meanWIS, 
                Rank=meanRank, 
@@ -408,19 +414,19 @@ annotate_figure(plots_trained, top = text_grob("mean Importance Score (trained) 
 ```{r pairs-plot-NAavg, message=FALSE}
 d_NAavg <- compare_NAavg %>% 
         mutate(neg_WIS=-meanWIS) %>% 
-        relocate(neg_WIS, .after=model) 
+        relocate(neg_WIS, .after=model) %>% 
+        select(model, neg_WIS, meanImpScore_shapley_eq, meanImpScore_lomo_eq)
 
-colnames <- c(paste0("-WIS"), #paste0("Std.rank"), 
-              "Phi[eq]^{lasomo}", "Phi[wt]^{lasomo}", 
-              "Phi[eq]^{lomo}", "Phi[wt]^{lomo}")
+colnames <- c(paste0("-WIS"),  
+              "Phi^{lasomo}", 
+              "Phi^{lomo}")
 
 p.pairs.NAavg <- ggpairs(
-        d_NAavg %>% select(c(2,6:9)),
+        d_NAavg %>% select(-1),
         columnLabels = colnames,
         labeller = "label_parsed"
         ) + 
-        theme(axis.text.x=element_text(angle = 45, vjust = 0.75, hjust=0.75),
-              strip.text = element_text(size = 14),
+        theme(strip.text = element_text(size = 14),
               panel.spacing = unit(0.65, "lines"))
 
 p.pairs.NAavg 
@@ -457,10 +463,10 @@ rank_lasomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi[eq]^{lasomo})),
+        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi^{lasomo})),
                          expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        labs(title = bquote(bold("(a) -WIS vs. " * Phi[eq]^{lasomo})),
+        labs(title = bquote(bold("(a) -WIS vs. " * Phi^{lasomo})),
              x = "") +
         # Add labels for each line
         geom_text(aes(label = model), 
@@ -533,10 +539,10 @@ rank_lomo_eq <- df_rank %>%
         ggplot(aes(x = Metric, y = Rank, group = model, linetype = line_type)) +
         geom_bump(linewidth=2) +
         geom_point(size=0, alpha = 0.1) +
-        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi[eq]^{lomo})),
+        scale_x_discrete(limits = rev, labels = c("-WIS", expression(Phi^{lomo})),
                          expand = c(0.45, 0.45)) +
         scale_y_continuous(trans="reverse", breaks = 1:10) +
-        labs(title = bquote(bold("(c) -WIS vs. " * Phi[eq]^{lomo}))) +
+        labs(title = bquote(bold("(c) -WIS vs. " * Phi^{lomo})), y=" ") +
         # Add labels for each line
         geom_text(aes(label = model), 
                   data = . %>% filter(Metric == "lomo_eq_rank"),  # Place label at the last point
