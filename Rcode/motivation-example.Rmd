@@ -57,7 +57,7 @@ p <- ggplot(forcasts_3mod, aes(x = target_end_date)) +
                   aes(y= value, group=1, color = "truth"), 
                   alpha = 0.75) +
         coord_cartesian(ylim = c(0, 500)) +
-        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b-%y") +
+        scale_x_date(name = NULL, date_breaks = "1 month", date_labels = "%b %Y") +
         labs(y = "Weekly Deaths",
              # title = "Forecasts of incident deaths in Massachusetts on November 28, 2021", 
              x="Date")  +
