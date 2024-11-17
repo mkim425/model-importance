@@ -22,7 +22,7 @@ p1 <- dat %>%
     geom_line(aes(linetype=Model)) +
     scale_linetype_manual(values=c("dashed","twodash", "solid")) +
     labs(x="b (prediction of forecaster 3)", y="Average  Importance", 
-         title = bquote(bold("(a) Average Importance based on SPE"))) +
+         title = bquote(bold("(a) Average Importance based on -SPE"))) +
     theme(legend.position = "bottom") + 
     theme(axis.text=element_text(size=12),
           axis.title=element_text(size=14),
@@ -50,7 +50,7 @@ p2 <- simdat %>% rename(Model = model) %>%
         geom_line(aes(linetype=Model)) +
         scale_linetype_manual(values=c("dashed","twodash", "solid")) +
         labs(x="b (bias of forecaster 3)", y="Average  Importance", 
-         title = bquote(bold("(b) Average Importance based on WIS"))) +
+         title = bquote(bold("(b) Average Importance based on -WIS"))) +
         theme(legend.position = "bottom") + 
         theme(axis.text=element_text(size=12),
               axis.title=element_text(size=14),
