@@ -70,13 +70,13 @@ p <- ggplot(forcasts_3mod, aes(x = target_end_date)) +
                                       "Eventually observed value")) + 
         scale_fill_manual("", values="#3388FF", 
                           labels = "95% Prediction interval") +
-        theme(axis.text.x = element_text(size=8, angle=90),
+        theme(axis.text.x = element_text(size=10, angle=90),
+              strip.text = element_text(size = 12),
               legend.title = element_blank(),
-              legend.text = element_text(size=10),
+              legend.text = element_text(size=12),
               legend.position = "bottom", 
               legend.direction = "vertical", 
               legend.box = "horizontal")
-
 ```
 
 ```{r}

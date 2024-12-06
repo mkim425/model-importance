@@ -20,7 +20,8 @@ dat <- readRDS("../Data/simulation_f3pts.rds")
 p1 <- dat %>% 
     ggplot(aes(x=f3_pred, y =Importance_score, group=Model)) +
     geom_line(aes(linetype=Model)) +
-    scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+    scale_linetype_manual(values=c("dashed","twodash", "solid"),
+                          labels = c("forecaster 1","forecaster 2","forecaster 3")) +
     labs(x="b (prediction of forecaster 3)", y="Average  Importance", 
          title = bquote(bold("(a) Average Importance based on -SPE"))) +
     theme(legend.position = "bottom") + 
@@ -48,7 +49,8 @@ p2 <- simdat %>% rename(Model = model) %>%
                          .groups = 'drop') %>% 
         ggplot(aes(x=f3_bias, y =avg_imp, group=Model)) +
         geom_line(aes(linetype=Model)) +
-        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid"),
+                          labels = c("forecaster 1","forecaster 2","forecaster 3")) +
         labs(x="b (bias of forecaster 3)", y="Average  Importance", 
          title = bquote(bold("(b) Average Importance based on -WIS"))) +
         theme(legend.position = "bottom") + 
@@ -86,7 +88,8 @@ p3 <- simdat %>% rename(Model = model) %>%
                          .groups = 'drop') %>% 
         ggplot(aes(x=f3_sharpness, y =avg_imp, group=Model)) +
         geom_line(aes(linetype=Model)) +
-        scale_linetype_manual(values=c("dashed","twodash", "solid")) +
+        scale_linetype_manual(values=c("dashed","twodash", "solid"),
+                              labels = c("forecaster 1","forecaster 2","forecaster 3")) +
         labs(x="s (standard deviation of forecaster 3)",
              #title="Importance of three forecasters by different dispersion of forecaster 3", 
              y="Average  Importance") + 
