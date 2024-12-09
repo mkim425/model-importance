@@ -3,8 +3,7 @@
 
 # Determination of model importance as an ensemble member
 
-<!-- badges: start -->
-<!-- badges: end -->
+[![DOI](https://zenodo.org/badge/712484680.svg)](https://doi.org/10.5281/zenodo.14335124)
 
 This is the data repository for the following paper:
 
