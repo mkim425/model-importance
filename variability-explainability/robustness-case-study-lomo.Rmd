@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
+# devtools::install_github("mkim425/modelimportance")
 library(modelimportance)
 library(here)
 setwd(here())
@@ -81,15 +82,10 @@ imp_ref <- model_importance(
   oracle_output_data = truth,
   ensemble_fun = "simple_ensemble",
   weighted = FALSE,
-  importance_algorithm = "lomo",
-  na_action = "worst"
+  importance_algorithm = "lomo"
 ) |>
-  mutate(across(where(is.numeric), round, 3))
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
 
-# NOTE:
-# na_action does not need to be specified for this case study as no missing forecasts
-# but, I included it as the mode_importance() function is not up to date yet.
-# In the updated version, default setting is included, which will be merged soon.
 ```
 
 ### Calculate importance scores excluding one model from the set of models at a time
@@ -119,8 +115,7 @@ results_df <- furrr::future_map_dfr(
         oracle_output_data = truth,
         ensemble_fun = "simple_ensemble",
         weighted = FALSE,
-        importance_algorithm = "lomo",
-        na_action = "worst"
+        importance_algorithm = "lomo"
       ) |>
         mutate(across(where(is.numeric), round, 3))
     ) |>
@@ -199,8 +194,7 @@ for (i in 2:9) {
           oracle_output_data = truth,
           ensemble_fun = "simple_ensemble",
           weighted = FALSE,
-          importance_algorithm = "lomo",
-          na_action = "worst"
+          importance_algorithm = "lomo"
         ) |>
           mutate(across(where(is.numeric), round, 3))
       ) |>
@@ -295,8 +289,7 @@ for (i in 1:7) {
           oracle_output_data = truth,
           ensemble_fun = "simple_ensemble",
           weighted = FALSE,
-          importance_algorithm = "lomo",
-          na_action = "worst"
+          importance_algorithm = "lomo"
         ) |>
           mutate(across(where(is.numeric), round, 3))
       ) |>
