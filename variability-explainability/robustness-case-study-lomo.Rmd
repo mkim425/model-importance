@@ -86,6 +86,8 @@ imp_ref <- model_importance(
 ) |>
   mutate(across(where(is.numeric), \(x) round(x, 3)))
 
+
+fdat_temp <- fdat |> select(model_id) |> distinct()
 ```
 
 ### Calculate importance scores excluding one model from the set of models at a time
@@ -213,9 +215,9 @@ for (i in 2:9) {
 all_dfs <- dplyr::bind_rows(results_df)
 ```
 
+#### Visualize results across different subset sizes
 
-
-```{r}
+```{r boxplot}
 model_sorted <- all_dfs |> 
         filter(subset_size == 9) |> 
         arrange(desc(mean_importance)) |> 
@@ -226,7 +228,7 @@ data2plot <- all_dfs |>
   mutate(model_id = factor(model_id, levels = model_sorted)) |>
   filter(!is.na(mean_importance)) 
 
-p <- data2plot |> filter(subset_size < 9) |> 
+p_boxplot <- data2plot |> filter(subset_size < 9) |> 
         ggplot(aes(x = factor(subset_size), y = mean_importance)) +
   geom_boxplot(
     width = 0.55,
@@ -250,23 +252,42 @@ p <- data2plot |> filter(subset_size < 9) |>
 pdf(file="imp_by_subsetsize.pdf",
     width = 8,
     height = 5)
-p
+p_boxplot
 dev.off()
 ```
 
 
 
+```{r jitterplot}
+model_sorted <- all_dfs |> 
+        filter(subset_size == 9) |> 
+        arrange(desc(mean_importance)) |> 
+        pull(model_id)
 
 
+data2plot <- all_dfs |> 
+  mutate(model_id = factor(model_id, levels = model_sorted)) |>
+  filter(!is.na(mean_importance)) 
 
+p_jitter <- data2plot |> filter(subset_size < 9) |> 
+        ggplot(aes(x = factor(subset_size), y = mean_importance)) +
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.4, size = 1) +
+        stat_summary(fun = median, geom = "crossbar", color = "blue", size = 0.25) +
+  facet_wrap(~ model_id, scales = "free_y") +
+  geom_point(
+    data = data2plot |> 
+        filter(subset_size == 9),
+    mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
+        labs(title = "Model importance metric distributions across different subset sizes",
+             x = "Number of models in the subset",
+             y = "Importance") + 
+        theme(axis.text=element_text(size=8),
+              axis.title=element_text(size=9),
+              legend.position = "none",
+              strip.text = element_text(size = 9))
 
-
-
-
-
-
-
-
+p_jitter
+```
 
 
 
