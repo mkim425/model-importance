@@ -1,0 +1,371 @@
+---
+title: "Variability in Model Importance Scores"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+# devtools::install_github("mkim425/modelimportance")
+library(modelimportance)
+library(ggplot2)
+library(here)
+setwd(here())
+```
+
+We explore the robustness of model importance using the leave-one-model-out (LOMO) approach 
+on the case study of 4-week ahead incident death forecasts in Massachusetts (MA).
+
+## Variance of importance scores for the case study
+
+```{r varaince_importance_scores}
+# Load data of importance scores
+forecast_ma2021_full <- readRDS("../Data/forecast_death_ma2021.rds")
+
+# Calculate variance of importance scores for each target_end_date
+forecast_ma2021_full |>
+  filter(!grepl("Ens", model)) |>
+  group_by(target_end_date) |>
+  summarize(variance = var(importance)) |>
+  filter(variance == max(variance) | variance == min(variance))
+```
+
+The least variable importance scores are observed for the target end date "2021-07-24", 
+while the most variable importance scores are observed for the target end date "2021-08-28".
+
+
+## Load data for specific prediction tasks
+
+Now we load the forecast data and truth data for these specific prediction tasks, and 
+convert them to the required format for the `model_importance()` function.
+
+```{r load_data_specific_tasks}
+# Load forecast data
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv")
+forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)
+
+truth <- read.csv("../Data/truth_MA_2021.csv") |>
+  select(target_end_date, location, value) |>
+  mutate(
+    target_end_date = as.Date(target_end_date),
+    target = "wk inc death"
+  ) |>
+  rename(oracle_value = value)
+
+# forecast data for MA, 4-week ahead incident death (horizon = 4)
+# target_end_date = "2021-07-24",
+models2include <- c(
+  "CovidAnalytics-DELPHI", "USC-SI_kJalpha",
+  "BPagano-RtDriven", "Karlen-pypm",
+  "SteveMcConnell-CovidComplete", "UMass-MechBayes",
+  "RobertWalraven-ESG", "COVIDhub-baseline",
+  "UCSD_NEU-DeepGLEAM"
+)
+
+fdat <- forecasts_MA_2021 |>
+  filter(
+    model %in% models2include,
+    location == "25",
+    horizon == 4
+  ) |>
+  mutate(
+    target = "wk inc death"
+  ) |>
+  rename(
+    model_id = model,
+    reference_date = forecast_date,
+    output_type = type,
+    output_type_id = quantile
+  ) |>
+  select(
+    model_id, reference_date, location, horizon,
+    target_end_date, target, output_type,
+    output_type_id, value
+  )
+
+fdat0724 <- fdat |>
+  filter(target_end_date == as.Date("2021-07-24")) |>
+  mutate(reference_date = as.Date("2021-06-28"))
+
+fdat0828 <- fdat |>
+  filter(target_end_date == as.Date("2021-08-28")) |>
+  mutate(reference_date = as.Date("2021-08-02"))
+```
+
+## Variability analysis 
+
+First, we store the importance score using all 9 models as a reference.
+```{r importance_ref_scores}
+# Reference importance scores for the two target end dates
+imp_ref <- forecast_ma2021_full |>
+  filter(
+    !grepl("Ens", model),
+    target_end_date %in% c(as.Date("2021-07-24"), as.Date("2021-08-28"))
+  ) |>  
+        rename(model_id = model) |>
+  select(model_id, target_end_date)
+```
+
+
+Next, we calculate importance scores using the LOMO approach for each subset of models.
+For this calculation, we use the `model_importance()` function from the `modelimportance` package.
+The output is a data frame with columns `model_id, mean_importance, excluded_model` per each excluded model:
+
+- `model_id`: the ID of the model whose importance score is calculated
+- `mean_importance`: the importance score of the model. Since we have only one prediction task, this is the same as the importance score.
+- `excluded_model`: the ID of the model that was excluded when calculating the importance score.
+- `target_end_date`: the target end date for which the importance score is calculated.
+
+Note that the excluded model's importance metric is assigned as NA.
+
+
+### Target end date: 2021-07-24 (least variable importance scores)
+
+```{r importance_lomo_0724}
+models <- unique(fdat$model_id)
+
+results_df <- list()
+for (i in 2:9) {
+  combo_list <- combn(models, i, simplify = FALSE)
+  results_df[[i]] <- furrr::future_map_dfr(
+    combo_list,
+    function(combo) {
+      dat <- fdat0724 |> filter(model_id %in% combo)
+
+      res <- suppressMessages(
+        model_importance(
+          forecast_data = dat,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lomo"
+        ) |>
+          mutate(across(where(is.numeric), round, 3))
+      ) |>
+        right_join(imp_ref |> filter(target_end_date == "2021-07-24"), 
+                   by = "model_id") |>
+        arrange(model_id) |>
+        mutate(
+          subset_size = length(combo),
+          included_models = paste(combo, collapse = ", ")
+        )
+
+      res
+    }
+  )
+}
+
+all_dfs0724 <- dplyr::bind_rows(results_df)
+```
+
+
+```{r plot_importance_0724}
+model_sorted <- imp_ref |> 
+        arrange(model_id) |> 
+        pull(model_id) |> unique()
+
+data2plot <- all_dfs0724 |> 
+  mutate(model_id = factor(model_id, levels = model_sorted)) |>
+  filter(!is.na(mean_importance)) 
+
+# Plot importance distributions across different subset sizes
+p0724 <- data2plot |> 
+        filter(subset_size < 9) |> 
+        ggplot(aes(x = factor(subset_size), y = mean_importance)) +
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.4, size = 1) +
+        stat_summary(fun = median, geom = "crossbar", color = "blue", size = 0.25) +
+  facet_wrap(~ model_id, scales = "free_y") +
+  geom_point(
+    data = data2plot |> 
+        filter(subset_size == 9),
+    mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
+        labs(title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-07-24)",
+             x = "Number of models in the subset",
+             y = "Importance") + 
+        theme(axis.text=element_text(size=8),
+              axis.title=element_text(size=9),
+              legend.position = "none",
+              strip.text = element_text(size = 9))
+```
+
+
+### Target end date: 2021-08-28 (most variable importance scores)
+
+```{r importance_lomo_0828}
+models <- unique(fdat$model_id)
+
+results_df <- list()
+for (i in 2:9) {
+  combo_list <- combn(models, i, simplify = FALSE)
+  results_df[[i]] <- furrr::future_map_dfr(
+    combo_list,
+    function(combo) {
+      dat <- fdat0828 |> filter(model_id %in% combo)
+
+      res <- suppressMessages(
+        model_importance(
+          forecast_data = dat,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lomo"
+        ) |>
+          mutate(across(where(is.numeric), round, 3))
+      ) |>
+        right_join(imp_ref |> filter(target_end_date == "2021-08-28"), 
+                   by = "model_id") |>
+        arrange(model_id) |>
+        mutate(
+          subset_size = length(combo),
+          included_models = paste(combo, collapse = ", ")
+        )
+
+      res
+    }
+  )
+}
+
+all_dfs0828 <- dplyr::bind_rows(results_df)
+```
+
+
+
+```{r plot_importance_0828}
+model_sorted <- imp_ref |> 
+        arrange(model_id) |> 
+        pull(model_id) |> unique()
+
+data2plot <- all_dfs0828 |> 
+  mutate(model_id = factor(model_id, levels = model_sorted)) |>
+  filter(!is.na(mean_importance)) 
+
+# Plot importance distributions across different subset sizes
+p0828 <- data2plot |> 
+        filter(subset_size < 9) |> 
+        ggplot(aes(x = factor(subset_size), y = mean_importance)) +
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.4, size = 1) +
+        stat_summary(fun = median, geom = "crossbar", color = "blue", size = 0.25) +
+  facet_wrap(~ model_id, scales = "free_y") +
+  geom_point(
+    data = data2plot |> 
+        filter(subset_size == 9),
+    mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
+        labs(title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-08-28)",
+             x = "Number of models in the subset",
+             y = "Importance") + 
+        theme(axis.text=element_text(size=8),
+              axis.title=element_text(size=9),
+              legend.position = "none",
+              strip.text = element_text(size = 9))
+```
+
+```{r}
+# # Save plots
+# pdf(file="../Plot/imp_across_subsetsize.pdf",
+#     width = 8,
+#     height = 5)
+# p0724
+# p0828
+# dev.off()
+```
+
+
+```{r}
+# Combined data for both target end dates
+imp_by_lomo <- rbind(all_dfs0724, all_dfs0828)
+# saveRDS(imp_by_lomo, file = "../Data/imp_lomo_by_subset_case_study.rds")
+```
+
+
+
+## Investigate subset weights in LASOMO and their impact on importance scores
+
+We further investigate the subset weights in the LASOMO approach and their impact on importance scores.
+```{r}
+df_karlen <- all_dfs0828 |> 
+        filter(model_id == "Karlen-pypm", !is.na(mean_importance)) |> 
+        mutate(S_size = subset_size -1) |> # S: subset without the target model as in the Shapley value formula
+        select(-included_models, -target_end_date)
+``` 
+
+```{r}
+df_karlen_wt_cal <- df_karlen |> 
+  mutate(
+          wt_perm = 1 / ((n - 1) * choose(n - 1, S_size)),
+          wt_eq = 1 / (2^(n - 1) - 1)
+          )
+
+summary <- df_karlen_wt_cal |> 
+        group_by(subset_size, S_size) |> 
+        summarize(
+          mean_imp = mean(mean_importance),
+          n= n(), 
+          wt_perm = unique(wt_perm),
+          wt_eq = unique(wt_eq),
+          .groups = "drop"
+        ) |> 
+        mutate(
+          wt_perm_n = n * wt_perm,
+          wt_eq_n = n * wt_eq,
+          imp_wt_perm = mean_imp * wt_perm_n,
+          imp_wt_eq = mean_imp * wt_eq_n
+        ) 
+
+
+summary |> 
+        summarize(
+          imp_lasomo_avg_mean_imp = mean(mean_imp),
+          imp_lasomo_perm = sum(imp_wt_perm),
+          imp_lasomo_eq = sum(imp_wt_eq)
+        )
+```
+
+
+
+```{r}
+suppressMessages(
+        model_importance(
+          forecast_data = fdat0828,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lasomo",
+          subset_wt = "perm_based"
+        )
+        )|> 
+        filter(model_id == "Karlen-pypm")
+```
+
+```{r}
+suppressMessages(
+        model_importance(
+          forecast_data = fdat0828,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lasomo",
+          subset_wt = "equal"
+        )) |> 
+        filter(model_id == "Karlen-pypm")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
