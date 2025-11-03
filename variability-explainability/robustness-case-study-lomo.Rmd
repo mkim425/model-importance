@@ -1,0 +1,333 @@
+---
+title: "Robustness-case_study-LOMO"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+# devtools::install_github("mkim425/modelimportance")
+library(modelimportance)
+library(here)
+setwd(here())
+```
+
+We explore the robustness of model importance using the leave-one-model-out (LOMO) approach 
+on the case study of 4-week ahead incident death forecasts in Massachusetts (MA).
+We use forecasts from 9 models that submitted forecasts for the week of December 25, 2021.
+
+In this case study, we exclude one model at a time from the set of all models, and calculate the importance scores of the remaining models.
+For example, when we exclude the "CovidAnalytics-DELPHI" model, we calculate the importance scores of the remaining 8 models using the forecasts from these models only. We repeat this process for each of the 9 models.
+
+## Load data
+
+We load the forecast data and truth data for the specific prediction task, and 
+convert them to the required format for the `model_importance()` function.
+
+```{r}
+forecasts_MA_2021 <- read.csv("../Data/forecasts_MA_2021_hor1-4.csv")
+forecasts_MA_2021$target_end_date <- as.Date(forecasts_MA_2021$target_end_date)
+
+# forecast data for MA, target_end_date = "2021-12-25", and
+# for 4-week ahead incident death (horizon = 4)
+models2include <- c(
+  "CovidAnalytics-DELPHI", "USC-SI_kJalpha",
+  "BPagano-RtDriven", "Karlen-pypm",
+  "SteveMcConnell-CovidComplete", "UMass-MechBayes",
+  "RobertWalraven-ESG", "COVIDhub-baseline",
+  "UCSD_NEU-DeepGLEAM"
+)
+fdat <- forecasts_MA_2021 |>
+  filter(
+    model %in% models2include,
+    location == "25",
+    target_end_date == as.Date("2021-12-25"),
+    horizon == 4
+  ) |>
+  mutate(
+    forecast_date = as.Date("2021-11-28"),
+    target = "wk inc death"
+  ) |>
+  rename(
+    model_id = model,
+    reference_date = forecast_date,
+    output_type = type,
+    output_type_id = quantile
+  ) |>
+  select(
+    model_id, reference_date, location, horizon,
+    target_end_date, target, output_type,
+    output_type_id, value
+  )
+
+truth <- read.csv("../Data/truth_MA_2021.csv") |>
+  select(target_end_date, location, value) |>
+  mutate(
+    target_end_date = as.Date(target_end_date),
+    target = "wk inc death"
+  ) |>
+  rename(oracle_value = value)
+```
+
+
+
+## Calculate importance scores in LOMO approach
+
+### Importance scores using all models as a reference
+First, we calculate the importance scores using all models to have a reference.
+
+```{r note, message=FALSE}
+imp_ref <- model_importance(
+  forecast_data = fdat,
+  oracle_output_data = truth,
+  ensemble_fun = "simple_ensemble",
+  weighted = FALSE,
+  importance_algorithm = "lomo"
+) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3)))
+
+
+fdat_temp <- fdat |> select(model_id) |> distinct()
+```
+
+### Calculate importance scores excluding one model from the set of models at a time
+
+We exclude one model at a time from the set of all models, and calculate the importance scores of the remaining models.
+The resulting output is stored in a data frame with columns `model_id, mean_importance, excluded_model` per each excluded model:
+
+- `model_id`: the ID of the model whose importance score is calculated
+- `mean_importance`: the importance score of the model. Since we have only one prediction task, this is the same as the importance score.
+- `excluded_model`: the ID of the model that was excluded when calculating the importance score.
+
+Note that the excluded model's importance metric is assigned as NA.
+
+This process is repeated along all models, and the results are combined into a single data frame.
+
+```{r}
+models <- unique(fdat$model_id)
+
+results_df <- furrr::future_map_dfr(
+  models,
+  function(m) {
+    fdat_lomo <- fdat |> filter(model_id != m)
+
+    res <- suppressMessages(
+      model_importance(
+        forecast_data = fdat_lomo,
+        oracle_output_data = truth,
+        ensemble_fun = "simple_ensemble",
+        weighted = FALSE,
+        importance_algorithm = "lomo"
+      ) |>
+        mutate(across(where(is.numeric), round, 3))
+    ) |>
+      right_join(fdat_temp, by = "model_id") |>
+      arrange(model_id) |>
+      mutate(excluded_model = m)
+
+    res
+  }
+)
+```
+
+
+#### Summarize results
+
+```{r}
+results_df_summary <- results_df |>
+  filter(!is.na(mean_importance)) |>
+  group_by(model_id) |>
+  summarize(
+    avg_importance = mean(mean_importance, na.rm = TRUE),
+    sd_importance = sd(mean_importance, na.rm = TRUE),
+    min_importance = min(mean_importance, na.rm = TRUE),
+    max_importance = max(mean_importance, na.rm = TRUE)
+  )
+```
+
+#### Visualize results
+
+```{r}
+library(ggplot2)
+
+
+results_df |>
+  filter(!is.na(mean_importance)) |>
+  ggplot(aes(x = model_id, y = mean_importance)) +
+  geom_boxplot(
+    width = 0.55,
+    outlier.shape = 1,
+    outlier.size = 1
+  ) +
+  geom_point(
+    data = imp_ref,
+    mapping = aes(x = model_id, y = mean_importance),
+    shape = 23, fill = "black", size = 2,
+    position = position_nudge(x = -0.4)
+  ) +
+  labs(
+    title = "Model importance metric distributions",
+    x = "Model",
+    y = "Importance"
+  ) +
+  theme(
+    axis.text.x = element_text(size = 8, angle = 20, hjust = 0.85),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 14),
+    legend.position = "none",
+    strip.text = element_text(size = 10)
+  )
+```
+
+### Calculate importance scores across different subset sizes
+
+```{r}
+results_df <- list()
+for (i in 2:9) {
+  combo_list <- combn(models, i, simplify = FALSE)
+  results_df[[i]] <- furrr::future_map_dfr(
+    combo_list,
+    function(combo) {
+      fdat_lomo <- fdat |> filter(model_id %in% combo)
+
+      res <- suppressMessages(
+        model_importance(
+          forecast_data = fdat_lomo,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lomo"
+        ) |>
+          mutate(across(where(is.numeric), round, 3))
+      ) |>
+        right_join(fdat_temp, by = "model_id") |>
+        arrange(model_id) |>
+        mutate(
+          subset_size = length(combo),
+          included_models = paste(combo, collapse = ", ")
+        )
+
+      res
+    }
+  )
+}
+
+all_dfs <- dplyr::bind_rows(results_df)
+```
+
+#### Visualize results across different subset sizes
+
+```{r boxplot}
+model_sorted <- all_dfs |> 
+        filter(subset_size == 9) |> 
+        arrange(desc(mean_importance)) |> 
+        pull(model_id)
+
+
+data2plot <- all_dfs |> 
+  mutate(model_id = factor(model_id, levels = model_sorted)) |>
+  filter(!is.na(mean_importance)) 
+
+p_boxplot <- data2plot |> filter(subset_size < 9) |> 
+        ggplot(aes(x = factor(subset_size), y = mean_importance)) +
+  geom_boxplot(
+    width = 0.55,
+    outlier.shape = 1,
+    outlier.size = 1
+  ) +
+  facet_wrap(~ model_id, scales = "free_y") +
+  geom_point(
+    data = data2plot |> 
+        filter(subset_size == 9),
+    mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
+        labs(title = "Model importance metric distributions across different subset sizes",
+             x = "Number of models in the subset",
+             y = "Importance") + 
+        theme(axis.text=element_text(size=8),
+              axis.title=element_text(size=9),
+              legend.position = "none",
+              strip.text = element_text(size = 9))
+        
+
+pdf(file="imp_by_subsetsize.pdf",
+    width = 8,
+    height = 5)
+p_boxplot
+dev.off()
+```
+
+
+
+```{r jitterplot}
+model_sorted <- all_dfs |> 
+        filter(subset_size == 9) |> 
+        arrange(desc(mean_importance)) |> 
+        pull(model_id)
+
+
+data2plot <- all_dfs |> 
+  mutate(model_id = factor(model_id, levels = model_sorted)) |>
+  filter(!is.na(mean_importance)) 
+
+p_jitter <- data2plot |> filter(subset_size < 9) |> 
+        ggplot(aes(x = factor(subset_size), y = mean_importance)) +
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.4, size = 1) +
+        stat_summary(fun = median, geom = "crossbar", color = "blue", size = 0.25) +
+  facet_wrap(~ model_id, scales = "free_y") +
+  geom_point(
+    data = data2plot |> 
+        filter(subset_size == 9),
+    mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
+        labs(title = "Model importance metric distributions across different subset sizes",
+             x = "Number of models in the subset",
+             y = "Importance") + 
+        theme(axis.text=element_text(size=8),
+              axis.title=element_text(size=9),
+              legend.position = "none",
+              strip.text = element_text(size = 9))
+
+p_jitter
+```
+
+
+
+
+```{r anothor approach}
+# Another approach: exclude more than one model at a time
+models <- unique(fdat$model_id)
+
+results_df2 <- list()
+for (i in 1:7) {
+  combo_list <- combn(models, i, simplify = FALSE)
+  results_df2[[i]] <- furrr::future_map_dfr(
+    combo_list,
+    function(combo) {
+      fdat_lomo <- fdat |> filter(!model_id %in% combo)
+
+      res <- suppressMessages(
+        model_importance(
+          forecast_data = fdat_lomo,
+          oracle_output_data = truth,
+          ensemble_fun = "simple_ensemble",
+          weighted = FALSE,
+          importance_algorithm = "lomo"
+        ) |>
+          mutate(across(where(is.numeric), round, 3))
+      ) |>
+        right_join(fdat_temp, by = "model_id") |>
+        arrange(model_id) |>
+        mutate(
+          num_excld_mod = length(combo),
+          subset_size = 9 - length(combo),
+          excluded_models = paste(combo, collapse = ", ")
+        )
+
+      res
+    }
+  )
+}
+
+all_dfs2 <- dplyr::bind_rows(results_df2)
+```
+
+
