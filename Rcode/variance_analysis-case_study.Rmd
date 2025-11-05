@@ -8,6 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 # devtools::install_github("mkim425/modelimportance")
 library(modelimportance)
+# install.packages("hubVis", repos = c("https://hubverse-org.r-universe.dev", "https://cloud.r-project.org"))
+library(hubVis)
 library(ggplot2)
 library(here)
 setwd(here())
@@ -179,13 +181,13 @@ p0724 <- data2plot |>
     data = data2plot |> 
         filter(subset_size == 9),
     mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
-        labs(title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-07-24)",
+        labs(#title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-07-24)",
              x = "Number of models in the subset",
              y = "Importance") + 
-        theme(axis.text=element_text(size=8),
-              axis.title=element_text(size=9),
+        theme(axis.text=element_text(size=9),
+              axis.title=element_text(size=11),
               legend.position = "none",
-              strip.text = element_text(size = 9))
+              strip.text = element_text(size = 10))
 ```
 
 
@@ -250,13 +252,13 @@ p0828 <- data2plot |>
     data = data2plot |> 
         filter(subset_size == 9),
     mapping = aes(x = factor(subset_size), y = mean_importance), size = 1) +
-        labs(title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-08-28)",
+        labs(#title = "Model importance metric distributions across different subset sizes \n(Target end date: 2021-08-28)",
              x = "Number of models in the subset",
              y = "Importance") + 
-        theme(axis.text=element_text(size=8),
-              axis.title=element_text(size=9),
+        theme(axis.text=element_text(size=9),
+              axis.title=element_text(size=11),
               legend.position = "none",
-              strip.text = element_text(size = 9))
+              strip.text = element_text(size = 10))
 ```
 
 ```{r}
@@ -349,13 +351,62 @@ suppressMessages(
         filter(model_id == "Karlen-pypm")
 ```
 
+## Prediction plot of the forecasts via hubVis
+
+```{r warning=FALSE}
+target_data1 <- truth |> 
+        filter(target_end_date <= as.Date("2021-06-26"),
+               target_end_date >= as.Date("2021-04-15")) |> 
+        rename(date = target_end_date,
+               observation = oracle_value)
+model_out_tbl1 <- fdat |> 
+        filter(target_end_date >= as.Date("2021-06-20"),
+               target_end_date <= as.Date("2021-07-30")) |> 
+        rename(target_date = target_end_date) 
+p1 <- plot_step_ahead_model_output(model_out_tbl1, target_data1, 
+                             use_median_as_point = TRUE,
+                             pal_color = "Paired",
+                             show_legend = FALSE,
+                             interactive = FALSE, 
+                             facet = "model_id") + 
+        theme(axis.text=element_text(size=9),
+              axis.title=element_text(size=11),
+              strip.text = element_text(size = 10))
+
+```
 
 
+```{r warning=FALSE}
+target_data2 <- truth |> 
+        filter(target_end_date <= as.Date("2021-08-05"),
+               target_end_date >= as.Date("2021-06-15")) |> 
+        rename(date = target_end_date,
+               observation = oracle_value)
+model_out_tbl2 <- fdat |> 
+        filter(target_end_date >= as.Date("2021-07-26"),
+               target_end_date <= as.Date("2021-08-30")) |> 
+        rename(target_date = target_end_date) 
+p2 <- plot_step_ahead_model_output(model_out_tbl2, target_data2, 
+                             use_median_as_point = TRUE,
+                             pal_color = "Paired",
+                             show_legend = FALSE,
+                             interactive = FALSE, 
+                             facet = "model_id") + 
+        theme(axis.text=element_text(size=9),
+              axis.title=element_text(size=11),
+              strip.text = element_text(size = 10))
+```
 
 
-
-
-
+```{r}
+# # Save plots
+pdf(file="../Plot/forecasts-variation.pdf",
+    width = 8,
+    height = 5)
+p1
+p2
+dev.off()
+```
 
 
 
